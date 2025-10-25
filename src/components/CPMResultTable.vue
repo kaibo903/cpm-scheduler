@@ -1,7 +1,7 @@
 <template>
   <div class="cpm-result">
     <div class="result-header">
-      <h2>CPM 計算結果</h2>
+      <h2><span class="cpm-text">CPM</span> 計算結果</h2>
       <div class="summary" v-if="cpmResult">
         <div class="summary-item">
           <span class="label">專案總工期：</span>
@@ -69,13 +69,11 @@
                 <td class="task-name">
                   <div class="name-cell">
                     <span>{{ task.name }}</span>
-                    <div class="task-tags">
-                      <span v-if="task.isStart" class="tag tag-start">起始</span>
-                      <span v-if="task.isEnd" class="tag tag-end">結束</span>
-                    </div>
+                    <span v-if="task.isStart" class="tag tag-start">起始</span>
+                    <span v-if="task.isEnd" class="tag tag-end">結束</span>
                   </div>
                 </td>
-                <td class="center">{{ task.duration }}</td>
+                <td class="task-duration-cell">{{ task.duration }}</td>
                 <td class="center">{{ task.es ?? '-' }}</td>
                 <td class="center">{{ task.ef ?? '-' }}</td>
                 <td class="center">{{ task.ls ?? '-' }}</td>
@@ -161,6 +159,10 @@ function getTaskName(taskId: string): string {
   font-size: 18px;
   font-weight: 500;
   letter-spacing: 0.5px;
+}
+
+.result-header h2 .cpm-text {
+  font-weight: 300;
 }
 
 .summary {
@@ -295,14 +297,12 @@ function getTaskName(taskId: string): string {
 
 .table-container {
   overflow-x: auto;
-  border-radius: 2px;
-  border: 1px solid #e8e8e8;
+  max-width: 100%;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
 }
 
 thead {
@@ -311,31 +311,32 @@ thead {
 }
 
 th {
-  padding: 12px 16px;
+  padding: 8px 10px;
   text-align: center;
   font-weight: 400;
-  font-size: 12px;
-  border: 1px solid #e8e8e8;
+  font-size: 11px;
   color: #666;
-  letter-spacing: 0.5px;
-  height: 48px;
-  vertical-align: middle;
+  letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
+th:first-child {
+  text-align: left;
+}
+
 td {
-  padding: 12px 16px;
-  border: 1px solid #e8e8e8;
-  font-size: 13px;
+  padding: 8px 10px;
+  font-size: 12px;
   color: #333;
-  height: 48px;
+  line-height: 1.4;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 tbody tr {
   border-bottom: 1px solid #f0f0f0;
   transition: background 0.2s;
-  height: 48px;
+  height: auto;
 }
 
 tbody tr:hover {
@@ -346,41 +347,41 @@ tbody tr:hover {
   text-align: center;
 }
 
+.task-duration-cell {
+  text-align: right;
+}
+
 .task-name {
   font-weight: 400;
   color: #333;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .name-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-content: center;
-  max-height: 44px;
-  overflow: hidden;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
-.name-cell > span {
+.name-cell > span:first-child {
   line-height: 1.4;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.task-tags {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
 }
 
 .tag {
   display: inline-block;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 2px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 400;
   border: 1px solid;
   line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tag-start {
@@ -429,6 +430,7 @@ tbody tr:hover {
   color: #333;
   font-size: 15px;
   font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .legend-grid {

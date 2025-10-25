@@ -164,7 +164,7 @@
           <thead>
             <tr>
               <th>工項名稱</th>
-              <th>工期</th>
+              <th>工期(天)</th>
               <th>前置作業</th>
               <th>後續作業</th>
               <th>操作</th>
@@ -173,14 +173,22 @@
           <tbody>
             <tr v-for="task in tasks" :key="task.id">
               <td class="task-name">{{ task.name }}</td>
-              <td class="task-duration">{{ task.duration }} 天</td>
+              <td class="task-duration">{{ task.duration }}</td>
               <td class="task-deps">
                 <span v-if="task.predecessors.length === 0" class="empty">無</span>
-                <span v-else>{{ getTaskNames(task.predecessors).join(', ') }}</span>
+                <div v-else class="deps-list">
+                  <div v-for="(depName, index) in getTaskNames(task.predecessors)" :key="index" class="dep-item">
+                    {{ depName }}
+                  </div>
+                </div>
               </td>
               <td class="task-deps">
                 <span v-if="task.successors.length === 0" class="empty">無</span>
-                <span v-else>{{ getTaskNames(task.successors).join(', ') }}</span>
+                <div v-else class="deps-list">
+                  <div v-for="(depName, index) in getTaskNames(task.successors)" :key="index" class="dep-item">
+                    {{ depName }}
+                  </div>
+                </div>
               </td>
               <td class="task-actions">
                 <button class="btn btn-small btn-secondary" @click="editTask(task.id)">
@@ -532,26 +540,63 @@ function mergeDuplicateTasks() {
     return
   }
   
-  // 执行合并
+  // 建立 ID 映射表：被刪除的工項 ID -> 保留的主工項 ID
+  const idMapping = new Map<string, string>()
   const tasksToRemove: string[] = []
+  const primaryTaskMap = new Map<string, CPMTask>()
+  
+  // 第一階段：先建立完整的 ID 映射表
+  for (const [name, duplicateTasks] of duplicateGroups) {
+    if (duplicateTasks.length === 0) continue
+    
+    const primaryTask = duplicateTasks[0]!
+    primaryTaskMap.set(name, primaryTask)
+    
+    // 建立映射關係
+    for (let i = 1; i < duplicateTasks.length; i++) {
+      const task = duplicateTasks[i]
+      if (task) {
+        idMapping.set(task.id, primaryTask.id)
+        tasksToRemove.push(task.id)
+      }
+    }
+  }
+  
+  // 第二階段：合併重複工項並更新依賴
+  const updatedTasks: CPMTask[] = []
   
   for (const [name, duplicateTasks] of duplicateGroups) {
     if (duplicateTasks.length === 0) continue
     
-    // 保留第一个，合并其他的
     const primaryTask = duplicateTasks[0]!
-    const tasksToMerge = duplicateTasks.slice(1)
     
-    let mergedPredecessors = [...primaryTask.predecessors]
-    let mergedSuccessors = [...primaryTask.successors]
-    let maxDuration = primaryTask.duration
+    // 收集所有重複工項的前置和後續作業
+    let mergedPredecessors: Dependency[] = []
+    let mergedSuccessors: Dependency[] = []
+    let maxDuration = 0
     
-    // 合并其他任务的依赖关系
-    for (const task of tasksToMerge) {
-      mergedPredecessors = mergeDependencies(mergedPredecessors, task.predecessors)
-      mergedSuccessors = mergeDependencies(mergedSuccessors, task.successors)
+    // 合併所有重複工項（包括主工項）的依賴關係
+    for (const task of duplicateTasks) {
+      if (!task) continue
+      
+      // 更新依賴中的 taskId（如果指向其他重複工項）
+      const updatedPreds = task.predecessors.map(dep => {
+        if (idMapping.has(dep.taskId)) {
+          return { ...dep, taskId: idMapping.get(dep.taskId)! }
+        }
+        return dep
+      })
+      
+      const updatedSuccs = task.successors.map(dep => {
+        if (idMapping.has(dep.taskId)) {
+          return { ...dep, taskId: idMapping.get(dep.taskId)! }
+        }
+        return dep
+      })
+      
+      mergedPredecessors = mergeDependencies(mergedPredecessors, updatedPreds)
+      mergedSuccessors = mergeDependencies(mergedSuccessors, updatedSuccs)
       maxDuration = Math.max(maxDuration, task.duration)
-      tasksToRemove.push(task.id)
     }
     
     // 更新主任务
@@ -563,10 +608,55 @@ function mergeDuplicateTasks() {
       successors: mergedSuccessors
     }
     
-    emit('updateTask', updatedTask)
+    updatedTasks.push(updatedTask)
   }
   
-  // 删除重复的任务
+  // 第三階段：更新所有其他工項中指向被刪除工項的依賴關係
+  for (const task of props.tasks) {
+    // 跳過即將被刪除的工項
+    if (tasksToRemove.includes(task.id)) continue
+    
+    // 檢查是否已經在更新列表中
+    const alreadyUpdated = updatedTasks.some(t => t.id === task.id)
+    if (alreadyUpdated) continue
+    
+    let needsUpdate = false
+    const updatedPredecessors = task.predecessors.map(dep => {
+      if (idMapping.has(dep.taskId)) {
+        needsUpdate = true
+        return { ...dep, taskId: idMapping.get(dep.taskId)! }
+      }
+      return dep
+    })
+    
+    const updatedSuccessors = task.successors.map(dep => {
+      if (idMapping.has(dep.taskId)) {
+        needsUpdate = true
+        return { ...dep, taskId: idMapping.get(dep.taskId)! }
+      }
+      return dep
+    })
+    
+    // 如果有依賴關係需要更新
+    if (needsUpdate) {
+      // 去除可能的重複依賴
+      const uniquePredecessors = mergeDependencies([], updatedPredecessors)
+      const uniqueSuccessors = mergeDependencies([], updatedSuccessors)
+      
+      updatedTasks.push({
+        ...task,
+        predecessors: uniquePredecessors,
+        successors: uniqueSuccessors
+      })
+    }
+  }
+  
+  // 第四階段：執行所有更新
+  for (const task of updatedTasks) {
+    emit('updateTask', task)
+  }
+  
+  // 第五階段：刪除重複的任務
   for (const taskId of tasksToRemove) {
     emit('removeTask', taskId)
   }
@@ -761,7 +851,7 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 }
 
 .btn-small {
-  padding: 6px 14px;
+  padding: 5px 12px;
   font-size: 12px;
 }
 
@@ -794,7 +884,7 @@ thead {
 }
 
 th {
-  padding: 12px 16px;
+  padding: 8px 12px;
   text-align: left;
   color: #666;
   font-weight: 400;
@@ -805,6 +895,7 @@ th {
 tbody tr {
   border-bottom: 1px solid #f0f0f0;
   transition: background 0.2s;
+  height: auto;
 }
 
 tbody tr:hover {
@@ -812,19 +903,25 @@ tbody tr:hover {
 }
 
 td {
-  padding: 14px 16px;
+  padding: 8px 12px;
   font-size: 13px;
   color: #333;
+  line-height: 1.4;
 }
 
 .task-name {
   font-weight: 400;
   color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
 }
 
 .task-duration {
   color: #666;
   font-weight: 400;
+  text-align: center;
 }
 
 .task-deps {
@@ -835,6 +932,19 @@ td {
 .task-deps .empty {
   color: #ccc;
   font-style: italic;
+}
+
+.deps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.dep-item {
+  line-height: 1.4;
+  padding: 1px 0;
+  color: #666;
 }
 
 .task-actions {
@@ -936,7 +1046,7 @@ td {
   padding: 2px 6px;
   border: 1px solid #ccc;
   border-radius: 2px;
-  width: 50px;
+  width: 65px;
   text-align: center;
 }
 
