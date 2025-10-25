@@ -76,14 +76,25 @@ export interface Translations {
     exportTasks: string
     exportResults: string
     exportReport: string
+    dataInput: string
     addedTasks: string
     taskName: string
     duration: string
+    startDate: string
+    resources: string
+    resourceName: string
+    resourceQuantity: string
+    unitPrice: string
+    totalCost: string
+    addResource: string
     predecessors: string
     successors: string
     addTask: string
+    update: string
     calculate: string
     clearAll: string
+    mergeDuplicates: string
+    clearData: string
     actions: string
     edit: string
     delete: string
@@ -146,6 +157,7 @@ export interface Translations {
     taskUpdated: string
     taskDeleted: string
     tasksCleared: string
+    tasksMerged: string
     calculationComplete: string
     importSuccess: string
     exportSuccess: string

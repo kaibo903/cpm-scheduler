@@ -1,8 +1,7 @@
 <template>
   <div class="task-input">
     <div class="task-input-header">
-      <h2>{{ t.planning.taskName }}</h2>
-      <p class="subtitle">{{ t.planning.taskName }}</p>
+      <h2>{{ t.planning.dataInput }}</h2>
     </div>
 
     <div class="input-form">
@@ -14,7 +13,7 @@
               id="task-name"
               v-model="newTask.name"
               type="text"
-              :placeholder="t.planning.taskName"
+              placeholder=""
               @keyup.enter="addTask"
             />
           </div>
@@ -26,23 +25,26 @@
               v-model.number="newTask.duration"
               type="number"
               min="1"
-              :placeholder="t.planning.duration"
+              max="999"
+              placeholder=""
               @keyup.enter="addTask"
             />
           </div>
 
-          <div class="form-group button-group">
-            <button class="btn btn-primary" @click="addTask" :disabled="!isFormValid">
-              {{ editingTaskId ? t.planning.edit : t.planning.addTask }}
-            </button>
-            <button v-if="editingTaskId" class="btn btn-secondary" @click="cancelEdit">
-              {{ t.importDialog.cancel }}
-            </button>
+          <div class="form-group form-group-date">
+            <label for="start-date">{{ t.planning.startDate }}</label>
+            <input
+              id="start-date"
+              v-model="newTask.startDate"
+              type="date"
+              placeholder=""
+              @keyup.enter="addTask"
+            />
           </div>
         </div>
 
         <div class="dependencies-row">
-          <div class="form-group form-group-multi">
+          <div class="form-group form-group-multi predecessors-group">
             <label>{{ t.planning.predecessors }}</label>
             <div class="multi-select-container">
               <div class="selected-items">
@@ -98,7 +100,7 @@
             </div>
           </div>
 
-          <div class="form-group form-group-multi">
+          <div class="form-group form-group-multi successors-group">
             <label>{{ t.planning.successors }}</label>
             <div class="multi-select-container">
               <div class="selected-items">
@@ -154,6 +156,100 @@
             </div>
           </div>
         </div>
+
+        <!-- 🎯 資源與成本輸入區域 -->
+        <div class="resources-section">
+          <label class="section-label">{{ t.planning.resources }}</label>
+          
+          <div class="resources-table">
+            <div class="resources-header">
+              <div class="col-name">資源名稱</div>
+              <div class="col-quantity">數量</div>
+              <div class="col-price">單價</div>
+              <div class="col-cost">成本</div>
+              <div class="col-action"></div>
+            </div>
+
+            <div class="resources-body">
+              <div v-for="(resource, index) in newTask.resources" :key="resource.id" class="resource-row">
+                <div class="col-name">
+                  <input
+                    v-model="resource.name"
+                    type="text"
+                    placeholder=""
+                    @input="updateResourceCost(index)"
+                  />
+                </div>
+                <div class="col-quantity">
+                  <input
+                    :value="formatNumber(resource.quantity)"
+                    type="text"
+                    placeholder=""
+                    @input="handleQuantityInput($event, index)"
+                    @blur="updateResourceCost(index)"
+                  />
+                </div>
+                <div class="col-price">
+                  <input
+                    :value="formatNumber(resource.unitPrice)"
+                    type="text"
+                    placeholder=""
+                    @input="handlePriceInput($event, index)"
+                    @blur="updateResourceCost(index)"
+                  />
+                </div>
+                <div class="col-cost">
+                  <div class="cost-display">
+                    {{ resource.totalCost ? '$' + resource.totalCost.toLocaleString() : '-' }}
+                  </div>
+                </div>
+                <div class="col-action">
+                  <button
+                    type="button"
+                    class="btn-icon btn-icon-delete"
+                    @click="removeResourceRow(index)"
+                    title="刪除"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="resources-footer">
+              <button
+                type="button"
+                class="btn-add-resource-row"
+                @click="addResourceRow"
+                title="新增資源"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>新增資源</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button v-if="!editingTaskId" class="btn btn-primary" @click="addTask" :disabled="!isFormValid">
+            {{ t.planning.addTask }}
+          </button>
+          <template v-else>
+            <button class="btn btn-primary" @click="addTask" :disabled="!isFormValid">
+              {{ t.planning.update }}
+            </button>
+            <button class="btn btn-secondary" @click="cancelEdit">
+              {{ t.importDialog.cancel }}
+            </button>
+          </template>
+        </div>
       </div>
     </div>
 
@@ -165,6 +261,8 @@
             <tr>
               <th>{{ t.planning.taskName }}</th>
               <th>{{ t.planning.duration }}</th>
+              <th>{{ t.planning.resources }}</th>
+              <th>{{ t.planning.totalCost }}</th>
               <th>{{ t.planning.predecessors }}</th>
               <th>{{ t.planning.successors }}</th>
               <th>{{ t.planning.actions }}</th>
@@ -174,6 +272,20 @@
             <tr v-for="task in tasks" :key="task.id">
               <td class="task-name">{{ task.name }}</td>
               <td class="task-duration">{{ task.duration }}</td>
+              <td class="task-resources">
+                <span v-if="!task.resources || task.resources.length === 0" class="empty">無</span>
+                <div v-else class="resources-display">
+                  <div v-for="resource in task.resources" :key="resource.id" class="resource-display-item">
+                    {{ resource.name }} × {{ resource.quantity }}
+                  </div>
+                </div>
+              </td>
+              <td class="task-cost">
+                <span v-if="!task.resources || task.resources.length === 0" class="empty">-</span>
+                <span v-else class="cost-amount">
+                  ${{ calculateTaskTotalCost(task).toLocaleString() }}
+                </span>
+              </td>
               <td class="task-deps">
                 <span v-if="task.predecessors.length === 0" class="empty">無</span>
                 <div v-else class="deps-list">
@@ -191,11 +303,19 @@
                 </div>
               </td>
               <td class="task-actions">
-                <button class="btn btn-small btn-secondary" @click="editTask(task.id)">
-                  {{ t.planning.edit }}
+                <button class="btn-icon btn-icon-edit" @click="editTask(task.id)" title="編輯">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
                 </button>
-                <button class="btn btn-small btn-danger" @click="removeTask(task.id)">
-                  {{ t.planning.delete }}
+                <button class="btn-icon btn-icon-delete" @click="removeTask(task.id)" title="刪除">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
                 </button>
               </td>
             </tr>
@@ -210,10 +330,10 @@
 
     <div class="action-buttons" v-if="tasks.length > 0">
       <button class="btn btn-secondary" @click="mergeDuplicateTasks" v-if="hasDuplicateTasks">
-        {{ t.planning.clearAll }}
+        {{ t.planning.mergeDuplicates }}
       </button>
       <button class="btn btn-secondary" @click="clearAll">
-        {{ t.planning.clearAll }}
+        {{ t.planning.clearData }}
       </button>
       <button class="btn btn-success" @click="calculateSchedule">
         {{ t.planning.calculate }}
@@ -224,7 +344,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { CPMTask, Dependency, DependencyType } from '../types'
+import type { CPMTask, Dependency, DependencyType, Resource } from '../types'
 import { useLanguage } from '../composables/useLanguage'
 
 // 🌐 語言管理
@@ -240,14 +360,25 @@ const emit = defineEmits<{
   removeTask: [taskId: string]
   clearTasks: []
   calculate: []
+  mergeTasks: []
 }>()
 
 const newTask = ref({
   name: '',
   duration: null as number | null,
+  startDate: '',
+  resources: [] as Resource[],
   predecessors: [] as Dependency[],
   successors: [] as Dependency[]
 })
+
+// 🧮 計算資源成本
+function calculateResourceCost(quantity: number | null | undefined, unitPrice: number | null | undefined): number {
+  if (quantity && unitPrice) {
+    return quantity * unitPrice
+  }
+  return 0
+}
 
 const editingTaskId = ref<string | null>(null)
 
@@ -299,6 +430,16 @@ function getDependencyLabel(dep: Dependency): string {
   const task = props.tasks.find(t => t.id === dep.taskId)
   const taskName = task ? task.name : dep.taskId
   return `${taskName} (${dep.type})`
+}
+
+// 🧮 計算任務總成本
+function calculateTaskTotalCost(task: CPMTask): number {
+  if (!task.resources || task.resources.length === 0) {
+    return 0
+  }
+  return task.resources.reduce((total, resource) => {
+    return total + (resource.totalCost || 0)
+  }, 0)
 }
 
 function addPredecessor(taskId: string, type: DependencyType = 'FS') {
@@ -359,6 +500,63 @@ function updateSuccessorLag(taskId: string, newLag: number) {
   })
 }
 
+// 🔧 新增資源行
+function addResourceRow() {
+  const resource: Resource = {
+    id: `resource-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name: '',
+    quantity: 1,
+    unitPrice: 0,
+    totalCost: 0
+  }
+  newTask.value.resources.push(resource)
+}
+
+// 🔧 刪除資源行
+function removeResourceRow(index: number) {
+  newTask.value.resources.splice(index, 1)
+}
+
+// 🔧 格式化數字為千位分隔格式
+function formatNumber(value: number | undefined | null): string {
+  if (!value && value !== 0) return ''
+  return value.toLocaleString()
+}
+
+// 🔧 處理數量輸入
+function handleQuantityInput(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  const resource = newTask.value.resources[index]
+  if (!resource) return
+  
+  const value = input.value.replace(/,/g, '') // 移除逗號
+  const numValue = value ? parseInt(value) : undefined
+  resource.quantity = numValue
+  // 立即更新顯示格式
+  input.value = numValue ? numValue.toLocaleString() : ''
+}
+
+// 🔧 處理單價輸入
+function handlePriceInput(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  const resource = newTask.value.resources[index]
+  if (!resource) return
+  
+  const value = input.value.replace(/,/g, '') // 移除逗號
+  const numValue = value ? parseFloat(value) : undefined
+  resource.unitPrice = numValue
+  // 立即更新顯示格式
+  input.value = numValue ? numValue.toLocaleString() : ''
+}
+
+// 🔧 更新資源成本
+function updateResourceCost(index: number) {
+  const resource = newTask.value.resources[index]
+  if (resource) {
+    resource.totalCost = calculateResourceCost(resource.quantity, resource.unitPrice)
+  }
+}
+
 function addTask() {
   if (!isFormValid.value) return
 
@@ -388,7 +586,8 @@ function addTask() {
           name: trimmedName,
           duration: newTask.value.duration!,
           predecessors: mergedPredecessors,
-          successors: mergedSuccessors
+          successors: mergedSuccessors,
+          resources: [...newTask.value.resources]
         }
         
         emit('updateTask', task)
@@ -404,7 +603,8 @@ function addTask() {
         name: trimmedName,
         duration: newTask.value.duration!,
         predecessors: [...newTask.value.predecessors],
-        successors: [...newTask.value.successors]
+        successors: [...newTask.value.successors],
+        resources: [...newTask.value.resources]
       }
       emit('updateTask', task)
       editingTaskId.value = null
@@ -430,7 +630,8 @@ function addTask() {
           ...existingTask,
           duration: newTask.value.duration!, // 使用新的工期
           predecessors: mergedPredecessors,
-          successors: mergedSuccessors
+          successors: mergedSuccessors,
+          resources: [...newTask.value.resources]
         }
         
         emit('updateTask', task)
@@ -444,7 +645,8 @@ function addTask() {
         name: trimmedName,
         duration: newTask.value.duration!,
         predecessors: [...newTask.value.predecessors],
-        successors: [...newTask.value.successors]
+        successors: [...newTask.value.successors],
+        resources: [...newTask.value.resources]
       }
       emit('addTask', task)
     }
@@ -454,6 +656,8 @@ function addTask() {
   newTask.value = {
     name: '',
     duration: null,
+    startDate: '',
+    resources: [],
     predecessors: [],
     successors: []
   }
@@ -488,6 +692,8 @@ function editTask(taskId: string) {
   newTask.value = {
     name: task.name,
     duration: task.duration,
+    startDate: '',
+    resources: task.resources ? [...task.resources] : [],
     predecessors: [...task.predecessors],
     successors: [...task.successors]
   }
@@ -501,6 +707,8 @@ function cancelEdit() {
   newTask.value = {
     name: '',
     duration: null,
+    startDate: '',
+    resources: [],
     predecessors: [],
     successors: []
   }
@@ -655,15 +863,18 @@ function mergeDuplicateTasks() {
     }
   }
   
-  // 第四階段：執行所有更新
+  // 第四階段：執行所有更新（靜默模式，不顯示訊息）
   for (const task of updatedTasks) {
     emit('updateTask', task)
   }
   
-  // 第五階段：刪除重複的任務
+  // 第五階段：刪除重複的任務（靜默模式，不顯示訊息）
   for (const taskId of tasksToRemove) {
     emit('removeTask', taskId)
   }
+  
+  // 第六階段：發送合併完成事件
+  emit('mergeTasks')
 }
 
 function calculateSchedule() {
@@ -690,8 +901,8 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 }
 
 .task-input-header {
-  margin-bottom: 32px;
-  padding-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -711,28 +922,194 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 }
 
 .input-form {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-/* 基本信息行 */
+/* 基本信息行 - 3欄網格佈局 */
 .basic-info-row {
   display: grid;
-  grid-template-columns: 1fr 120px 120px;
+  grid-template-columns: 2fr 100px 1.2fr;
   gap: 16px;
   align-items: end;
 }
 
-/* 依赖关系行 */
+/* 依賴關係行 - 兩欄等寬 */
 .dependencies-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.form-group-multi {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🎯 資源表格區域 */
+.resources-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resources-section .section-label {
+  color: #666;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+.resources-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.resources-header {
+  display: grid;
+  grid-template-columns: 2fr 100px 100px 120px 40px;
+  gap: 8px;
+  background: #f5f5f5;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.resources-header > div {
+  text-align: left;
+  padding-left: 4px;
+}
+
+.resources-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #f9f9f9;
+}
+
+.resource-row {
+  display: grid;
+  grid-template-columns: 2fr 100px 100px 120px 40px;
+  gap: 8px;
+  padding: 8px;
+  background: white;
+  align-items: center;
+}
+
+.resource-row .col-name input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 14px;
+  background: #fafafa;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.resource-row .col-quantity input,
+.resource-row .col-price input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.resource-row input:hover {
+  border-color: #999;
+  background: #fff;
+}
+
+.resource-row input:focus {
+  outline: none;
+  border-color: #666;
+  background: #fff;
+}
+
+
+.resource-row .col-cost .cost-display {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  background: #f5f5f5;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #f44336;
+}
+
+.resource-row .col-action {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.resources-footer {
+  padding: 8px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-add-resource-row {
+  padding: 4px 12px 4px 4px;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.btn-add-resource-row svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.btn-add-resource-row span {
+  line-height: 1;
+}
+
+.btn-add-resource-row:hover {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.btn-add-resource-row:active {
+  background: #e0e0e0;
+  color: #333;
+}
+
+/* 按鈕行 */
+.button-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
 }
 
 .form-group {
@@ -743,20 +1120,22 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 .form-group label {
   margin-bottom: 8px;
   color: #666;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 13px;
   letter-spacing: 0.3px;
 }
 
 .form-group input,
 .form-group select {
-  padding: 10px 12px;
+  padding: 11px 14px;
   border: 1px solid #d0d0d0;
   border-radius: 2px;
   font-size: 14px;
   transition: border-color 0.2s;
   background: #fafafa;
   color: #333;
+  height: 44px;
+  box-sizing: border-box;
 }
 
 .form-group input:hover {
@@ -771,30 +1150,55 @@ function getTaskNames(dependencies: Dependency[]): string[] {
   background: #fff;
 }
 
-/* 工期输入 */
+/* 工期輸入 - 3位數字專用 */
 .form-group-duration input {
   text-align: center;
   font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  padding: 11px 8px;
 }
 
-.button-group {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
+/* 移除數字輸入框的上下箭頭 */
+.form-group-duration input::-webkit-outer-spin-button,
+.form-group-duration input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
 }
 
-.button-group .btn {
-  flex: 1;
-  height: 42px;
-  font-size: 13px;
+.form-group-duration input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* 日期輸入 */
+.form-group-date input {
+  text-align: left;
   font-weight: 400;
+  width: 100%;
+  font-size: 14px;
+}
+
+.form-group-date input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.form-group-date input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 .btn {
-  padding: 10px 20px;
+  padding: 11px 20px;
   border: 1px solid #333;
   border-radius: 2px;
   font-size: 13px;
+  height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 400;
   cursor: pointer;
   transition: all 0.2s;
@@ -932,6 +1336,29 @@ td {
   text-align: center;
 }
 
+.task-resources {
+  color: #666;
+  font-size: 12px;
+}
+
+.task-resources .empty {
+  color: #ccc;
+  font-style: italic;
+}
+
+.resources-display {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.resource-display-item {
+  line-height: 1.4;
+  padding: 1px 0;
+  color: #666;
+}
+
 .task-deps {
   color: #666;
   font-size: 12px;
@@ -955,11 +1382,77 @@ td {
   color: #666;
 }
 
+.task-cost {
+  color: #4caf50;
+  font-weight: 500;
+  text-align: right;
+  font-size: 13px;
+}
+
+.task-cost .empty {
+  color: #ccc;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.cost-amount {
+  font-weight: 500;
+}
+
 .task-actions {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
+}
+
+/* 🎨 圖示按鈕 - 扁平化設計 */
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.btn-icon svg {
+  width: 15px;
+  height: 15px;
+  transition: all 0.2s;
+}
+
+/* 編輯按鈕 */
+.btn-icon-edit {
+  color: #666;
+}
+
+.btn-icon-edit:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.btn-icon-edit:active {
+  background: #bbdefb;
+}
+
+/* 刪除按鈕 */
+.btn-icon-delete {
+  color: #666;
+}
+
+.btn-icon-delete:hover {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.btn-icon-delete:active {
+  background: #ffcdd2;
 }
 
 .task-actions .btn {
@@ -1121,22 +1614,56 @@ td {
 @media (max-width: 1200px) {
   .basic-info-row {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
   }
-  
+
   .form-group-duration input {
-    text-align: left;
+    text-align: center;
   }
-  
+
   .dependencies-row {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
+  }
+
+  .resources-header,
+  .resource-row {
+    grid-template-columns: 1fr 80px 80px 100px 36px;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .resource-row input {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .resource-row .col-cost .cost-display {
+    font-size: 12px;
+  }
+
+  .button-row {
+    display: flex;
+    justify-content: stretch;
+  }
+
+  .button-row .btn {
+    flex: 1;
   }
 }
 
 @media (max-width: 768px) {
+  .basic-info-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
   .task-input {
     padding: 24px;
+  }
+
+  .form-container {
+    gap: 16px;
   }
   
   .task-input-header h2 {

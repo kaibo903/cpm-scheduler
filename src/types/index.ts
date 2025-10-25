@@ -13,6 +13,17 @@ export interface Dependency {
 }
 
 /**
+ * 資源
+ */
+export interface Resource {
+  id: string                    // 資源唯一識別碼
+  name: string                  // 資源名稱
+  quantity?: number             // 資源數量（可選）
+  unitPrice?: number            // 單價（可選）
+  totalCost?: number            // 小計（可選，自動計算）
+}
+
+/**
  * CPM 任務資料結構
  * 包含作業的基本資訊和 CPM 計算結果
  */
@@ -22,6 +33,7 @@ export interface CPMTask {
   duration: number              // 工期（天數）
   predecessors: Dependency[]    // 前置作業（含關係類型）
   successors: Dependency[]      // 後續作業（含關係類型）
+  resources?: Resource[]        // 資源列表（可選）
   
   // CPM 計算結果
   es?: number                   // 最早開始時間 (Earliest Start)

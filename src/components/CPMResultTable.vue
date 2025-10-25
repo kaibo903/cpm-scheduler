@@ -2,16 +2,6 @@
   <div class="cpm-result">
     <div class="result-header">
       <h2><span class="cpm-text">CPM</span> {{ t.cpmResult.summary }}</h2>
-      <div class="summary" v-if="cpmResult">
-        <div class="summary-item">
-          <span class="label">{{ t.cpmResult.totalDuration }}：</span>
-          <span class="value highlight">{{ cpmResult.totalDuration }} 天</span>
-        </div>
-        <div class="summary-item">
-          <span class="label">{{ t.cpmResult.criticalCount }}：</span>
-          <span class="value">{{ cpmResult.criticalPath.length }} 項</span>
-        </div>
-      </div>
     </div>
 
     <div v-if="cpmResult?.errors && cpmResult.errors.length > 0" class="error-box">
@@ -27,17 +17,30 @@
     </div>
 
     <div v-if="cpmResult && !cpmResult.hasCycle && (!cpmResult.errors || cpmResult.errors.length === 0)">
-      <!-- 要徑顯示 -->
-      <div class="critical-path-section">
-        <h3><span class="dot"></span>{{ t.cpmResult.critical }}</h3>
-        <div class="critical-path-flow">
-          <div 
-            v-for="(taskId, index) in cpmResult.criticalPath" 
-            :key="taskId"
-            class="path-item"
-          >
-            <span class="task-badge critical">{{ getTaskName(taskId) }}</span>
-            <span v-if="index < cpmResult.criticalPath.length - 1" class="arrow">→</span>
+      <!-- 合併的摘要區塊 -->
+      <div class="summary-section">
+        <div class="summary-stats">
+          <div class="summary-item">
+            <span class="label">{{ t.cpmResult.totalDuration }}：</span>
+            <span class="value highlight">{{ cpmResult.totalDuration }} 天</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ t.cpmResult.criticalCount }}：</span>
+            <span class="value">{{ cpmResult.criticalPath.length }} 項</span>
+          </div>
+        </div>
+        
+        <div class="critical-path-display">
+          <h3><span class="dot"></span>{{ t.cpmResult.critical }}</h3>
+          <div class="critical-path-flow">
+            <div 
+              v-for="(taskId, index) in cpmResult.criticalPath" 
+              :key="taskId"
+              class="path-item"
+            >
+              <span class="task-badge critical">{{ getTaskName(taskId) }}</span>
+              <span v-if="index < cpmResult.criticalPath.length - 1" class="arrow">→</span>
+            </div>
           </div>
         </div>
       </div>
@@ -169,13 +172,21 @@ function getTaskName(taskId: string): string {
   font-weight: 300;
 }
 
-.summary {
-  display: flex;
-  gap: 32px;
-  padding: 16px;
+/* 🎯 合併的摘要區塊 */
+.summary-section {
+  padding: 20px;
   background: #fafafa;
   border-radius: 2px;
   border: 1px solid #e8e8e8;
+  margin-bottom: 32px;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 32px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .summary-item {
@@ -257,15 +268,7 @@ function getTaskName(taskId: string): string {
   color: #666;
 }
 
-.critical-path-section {
-  margin-bottom: 32px;
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 2px;
-  border: 1px solid #e8e8e8;
-}
-
-.critical-path-section h3 {
+.critical-path-display h3 {
   margin: 0 0 16px 0;
   color: #c33;
   font-size: 15px;
@@ -276,7 +279,7 @@ function getTaskName(taskId: string): string {
   gap: 8px;
 }
 
-.critical-path-section h3 .dot {
+.critical-path-display h3 .dot {
   width: 10px;
   height: 10px;
   background: #d9534f;

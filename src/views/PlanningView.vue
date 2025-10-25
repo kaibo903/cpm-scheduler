@@ -43,6 +43,7 @@
           @remove-task="handleRemoveTask"
           @clear-tasks="handleClearTasks"
           @calculate="handleCalculate"
+          @merge-tasks="handleMergeTasks"
         />
       </div>
 
@@ -152,6 +153,7 @@ const messageType = ref<'success' | 'error' | 'info'>('info')
 const showImportDialog = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const activeTab = ref<'gantt' | 'pdm'>('gantt')
+let isMerging = false  // 🔄 合併標記，避免顯示多個通知
 
 // 🔧 任務管理函式
 function handleAddTask(task: CPMTask) {
@@ -165,14 +167,29 @@ function handleUpdateTask(updatedTask: CPMTask) {
   if (index !== -1) {
     tasks.value[index] = updatedTask
     buildTaskDependencies(tasks.value)
-    showMessage(t.value.messages.taskUpdated, 'success')
+    // 只在非合併模式下顯示訊息
+    if (!isMerging) {
+      showMessage(t.value.messages.taskUpdated, 'success')
+    }
   }
 }
 
 function handleRemoveTask(taskId: string) {
   tasks.value = tasks.value.filter(t => t.id !== taskId)
   buildTaskDependencies(tasks.value)
-  showMessage(t.value.messages.taskDeleted, 'success')
+  // 只在非合併模式下顯示訊息
+  if (!isMerging) {
+    showMessage(t.value.messages.taskDeleted, 'success')
+  }
+}
+
+function handleMergeTasks() {
+  isMerging = true
+  // 延遲顯示訊息，確保所有更新和刪除都完成
+  setTimeout(() => {
+    showMessage(t.value.messages.tasksMerged, 'success')
+    isMerging = false
+  }, 100)
 }
 
 function handleClearTasks() {
