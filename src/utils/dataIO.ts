@@ -20,6 +20,7 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
     } else if (task.predecessors.length === 1) {
       // 單個前置作業
       const dep = task.predecessors[0]
+      if (!dep) return [task.name, task.duration.toString(), '---', '---', '---'] // 類型守衛
       const predName = taskMap.get(dep.taskId)?.name || dep.taskId
       return [
         task.name,
@@ -31,6 +32,8 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
     } else {
       // 多個前置作業，如果關係類型和lag相同，合併顯示
       const firstDep = task.predecessors[0]
+      if (!firstDep) return [task.name, task.duration.toString(), '---', '---', '---'] // 類型守衛
+      
       const allSameType = task.predecessors.every(d => d.type === firstDep.type)
       const allSameLag = task.predecessors.every(d => (d.lag || 0) === (firstDep.lag || 0))
       
@@ -147,7 +150,7 @@ function parseCSV(text: string): CPMTask[] {
   function parseTaskWithType(str: string): { name: string; type: 'FS' | 'SS' | 'FF' | 'SF'; lag: number } {
     // 匹配格式: "任務名(類型 Lag數值)" 或 "任務名(類型)"
     const matchWithLag = str.match(/^(.+?)\(([FS\-]+)\s+Lag([+-]?\d+)\)$/i)
-    if (matchWithLag) {
+    if (matchWithLag && matchWithLag[1] && matchWithLag[2] && matchWithLag[3]) {
       return { 
         name: matchWithLag[1].trim(), 
         type: normalizeRelationType(matchWithLag[2]),
@@ -156,7 +159,7 @@ function parseCSV(text: string): CPMTask[] {
     }
     
     const matchWithoutLag = str.match(/^(.+?)\(([FS\-]+)\)$/i)
-    if (matchWithoutLag) {
+    if (matchWithoutLag && matchWithoutLag[1] && matchWithoutLag[2]) {
       return { 
         name: matchWithoutLag[1].trim(), 
         type: normalizeRelationType(matchWithoutLag[2]),
@@ -197,7 +200,7 @@ function parseCSV(text: string): CPMTask[] {
   })
 
   // 檢測CSV格式（3欄或5欄）
-  const firstDataLine = parseCSVLine(dataLines[0])
+  const firstDataLine = dataLines[0] ? parseCSVLine(dataLines[0]) : []
   const isExtendedFormat = firstDataLine.length >= 5 // 5欄格式：作業、工期、前置作業、關係型式、Lag
 
   // 第二遍：建立依賴關係

@@ -266,7 +266,8 @@ function backwardPass(tasks: CPMTask[], sortedIds: string[]): void {
   // 反向遍歷
   for (let i = sortedIds.length - 1; i >= 0; i--) {
     const taskId = sortedIds[i]
-    const task = taskMap.get(taskId)!
+    const task = taskMap.get(taskId)
+    if (!task) continue // 類型守衛
     
     if (task.lf === undefined) {
       // 計算最晚完成時間 (LF) 和最晚開始時間 (LS)
