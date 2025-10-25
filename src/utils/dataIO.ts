@@ -1,14 +1,14 @@
 import type { CPMTask, CPMResult, TaskInput } from '../types'
 
 /**
- * 导出任务为 CSV（5列扩展格式）
+ * 匯出任務為 CSV（5欄擴充格式）
  */
 export function exportTasksToCSV(tasks: CPMTask[]): void {
   const headers = ['工項名稱', '工期(天)', '前置作業', '關係型式', 'Lag(天)']
   const taskMap = new Map(tasks.map(t => [t.id, t]))
   
   const rows = tasks.map(task => {
-    // 如果有多个前置作业，为每个生成一行，或者合并显示
+    // 如果有多個前置作業，為每個產生一行，或者合併顯示
     if (task.predecessors.length === 0) {
       return [
         task.name,
@@ -18,7 +18,7 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
         '---'
       ]
     } else if (task.predecessors.length === 1) {
-      // 单个前置作业
+      // 單個前置作業
       const dep = task.predecessors[0]
       const predName = taskMap.get(dep.taskId)?.name || dep.taskId
       return [
@@ -29,13 +29,13 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
         (dep.lag || 0).toString()
       ]
     } else {
-      // 多个前置作业，如果关系类型和lag相同，合并显示
+      // 多個前置作業，如果關係類型和lag相同，合併顯示
       const firstDep = task.predecessors[0]
       const allSameType = task.predecessors.every(d => d.type === firstDep.type)
       const allSameLag = task.predecessors.every(d => (d.lag || 0) === (firstDep.lag || 0))
       
       if (allSameType && allSameLag) {
-        // 关系类型和lag相同，可以合并
+        // 關係類型和lag相同，可以合併
         const predNames = task.predecessors.map(dep => 
           taskMap.get(dep.taskId)?.name || dep.taskId
         ).join(', ')
@@ -47,7 +47,7 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
           (firstDep.lag || 0).toString()
         ]
       } else {
-        // 关系类型或lag不同，显示第一个，其他在备注中
+        // 關係類型或lag不同，顯示第一個，其他在備註中
         const predName = taskMap.get(firstDep.taskId)?.name || firstDep.taskId
         return [
           task.name,
@@ -68,7 +68,7 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
 }
 
 /**
- * 导出 CPM 结果为 CSV
+ * 匯出 CPM 結果為 CSV
  */
 export function exportCPMResultToCSV(cpmResult: CPMResult): void {
   const headers = [
@@ -95,7 +95,7 @@ export function exportCPMResultToCSV(cpmResult: CPMResult): void {
 }
 
 /**
- * 从 CSV 导入任务
+ * 從 CSV 匯入任務
  */
 export function importTasksFromCSV(file: File): Promise<CPMTask[]> {
   return new Promise((resolve, reject) => {
@@ -120,32 +120,32 @@ export function importTasksFromCSV(file: File): Promise<CPMTask[]> {
 }
 
 /**
- * 解析 CSV 文本为任务列表
+ * 解析 CSV 文字為任務列表
  */
 function parseCSV(text: string): CPMTask[] {
   const lines = text.trim().split('\n')
   if (lines.length < 2) {
-    throw new Error('CSV 檔案格式錯誤：至少需要標題行和一筆資料')
+    throw new Error('CSV 檔案格式錯誤：至少需要標題列和一筆資料')
   }
 
-  // 跳过标题行
+  // 跳過標題列
   const dataLines = lines.slice(1)
   
   const tasks: CPMTask[] = []
   const taskNameToId = new Map<string, string>()
 
-  // 辅助函数：标准化关系类型（支持 F-S, FS 等格式）
+  // 輔助函式：標準化關係類型（支援 F-S, FS 等格式）
   function normalizeRelationType(typeStr: string): 'FS' | 'SS' | 'FF' | 'SF' {
     const normalized = typeStr.replace(/-/g, '').toUpperCase()
     if (normalized === 'FS' || normalized === 'SS' || normalized === 'FF' || normalized === 'SF') {
       return normalized as 'FS' | 'SS' | 'FF' | 'SF'
     }
-    return 'FS' // 默认值
+    return 'FS' // 預設值
   }
 
-  // 辅助函数：解析任务名称、类型和lag，例如 "工項A(FS Lag5)" -> {name: "工項A", type: "FS", lag: 5}
+  // 輔助函式：解析任務名稱、類型和lag，例如 "工項A(FS Lag5)" -> {name: "工項A", type: "FS", lag: 5}
   function parseTaskWithType(str: string): { name: string; type: 'FS' | 'SS' | 'FF' | 'SF'; lag: number } {
-    // 匹配格式: "任务名(类型 Lag数值)" 或 "任务名(类型)"
+    // 匹配格式: "任務名(類型 Lag數值)" 或 "任務名(類型)"
     const matchWithLag = str.match(/^(.+?)\(([FS\-]+)\s+Lag([+-]?\d+)\)$/i)
     if (matchWithLag) {
       return { 
@@ -164,14 +164,14 @@ function parseCSV(text: string): CPMTask[] {
       }
     }
     
-    // 如果没有指定类型，默认为 FS，lag为0
+    // 如果沒有指定類型，預設為 FS，lag為0
     return { name: str.trim(), type: 'FS', lag: 0 }
   }
 
-  // 第一遍：创建所有任务
+  // 第一遍：建立所有任務
   dataLines.forEach((line, index) => {
     const fields = parseCSVLine(line)
-    if (fields.length < 2) return // 跳过空行或格式错误的行
+    if (fields.length < 2) return // 跳過空行或格式錯誤的列
 
     const name = fields[0]?.trim()
     const durationStr = fields[1]?.trim()
@@ -180,7 +180,7 @@ function parseCSV(text: string): CPMTask[] {
 
     const duration = parseInt(durationStr, 10)
     if (isNaN(duration) || duration <= 0) {
-      throw new Error(`第 ${index + 2} 行：工期必須為正整數`)
+      throw new Error(`第 ${index + 2} 列：工期必須為正整數`)
     }
 
     const id = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`
@@ -196,11 +196,11 @@ function parseCSV(text: string): CPMTask[] {
     taskNameToId.set(name, id)
   })
 
-  // 检测CSV格式（3列或5列）
+  // 檢測CSV格式（3欄或5欄）
   const firstDataLine = parseCSVLine(dataLines[0])
-  const isExtendedFormat = firstDataLine.length >= 5 // 5列格式：作业、工期、前置作业、关系型式、Lag
+  const isExtendedFormat = firstDataLine.length >= 5 // 5欄格式：作業、工期、前置作業、關係型式、Lag
 
-  // 第二遍：建立依赖关系
+  // 第二遍：建立依賴關係
   dataLines.forEach((line, index) => {
     const fields = parseCSVLine(line)
     if (fields.length < 2) return
@@ -210,12 +210,12 @@ function parseCSV(text: string): CPMTask[] {
     if (!task || !name) return
 
     if (isExtendedFormat && fields.length >= 5) {
-      // 5列格式：作业、工期、前置作业、关系型式、Lag
+      // 5欄格式：作業、工期、前置作業、關係型式、Lag
       const predecessorNames = fields[2]?.trim() || ''
       const relationType = fields[3]?.trim() || 'F-S'
       const lagStr = fields[4]?.trim() || '0'
       
-      // 处理前置作业
+      // 處理前置作業
       if (predecessorNames && predecessorNames !== '---') {
         const type = normalizeRelationType(relationType)
         const lag = parseInt(lagStr) || 0
@@ -229,11 +229,11 @@ function parseCSV(text: string): CPMTask[] {
         })
       }
     } else {
-      // 3列或4列格式（旧格式）：作业、工期、前置作业[、后续作业]
+      // 3欄或4欄格式（舊格式）：作業、工期、前置作業[、後續作業]
       const predecessorNames = fields[2]?.trim() || ''
       const successorNames = fields[3]?.trim() || ''
 
-      // 处理前置作业
+      // 處理前置作業
       if (predecessorNames && predecessorNames !== '---') {
         const predNames = predecessorNames.split(/[;,]/).map(s => s.trim()).filter(s => s && s !== '---')
         predNames.forEach(predNameWithType => {
@@ -245,7 +245,7 @@ function parseCSV(text: string): CPMTask[] {
         })
       }
 
-      // 处理后续作业
+      // 處理後續作業
       if (successorNames && successorNames !== '---') {
         const succNames = successorNames.split(/[;,]/).map(s => s.trim()).filter(s => s && s !== '---')
         succNames.forEach(succNameWithType => {
@@ -259,7 +259,7 @@ function parseCSV(text: string): CPMTask[] {
     }
   })
 
-  // 补全双向依赖
+  // 補全雙向依賴
   tasks.forEach(task => {
     task.predecessors.forEach(predDep => {
       const pred = tasks.find(t => t.id === predDep.taskId)
@@ -273,7 +273,7 @@ function parseCSV(text: string): CPMTask[] {
 }
 
 /**
- * 解析 CSV 行（处理引号内的逗号）
+ * 解析 CSV 列（處理引號內的逗號）
  */
 function parseCSVLine(line: string): string[] {
   const result: string[] = []
@@ -298,7 +298,7 @@ function parseCSVLine(line: string): string[] {
 }
 
 /**
- * 下载文件
+ * 下載檔案
  */
 function downloadFile(content: string, filename: string, mimeType: string): void {
   const BOM = '\uFEFF' // UTF-8 BOM for Excel
@@ -320,7 +320,7 @@ function downloadFile(content: string, filename: string, mimeType: string): void
 }
 
 /**
- * 导出关键路径报告
+ * 匯出關鍵路徑報告
  */
 export function exportCriticalPathReport(cpmResult: CPMResult): void {
   const taskMap = new Map(cpmResult.tasks.map(t => [t.id, t]))
@@ -362,7 +362,7 @@ export function exportCriticalPathReport(cpmResult: CPMResult): void {
 }
 
 /**
- * 生成示例 CSV 模板
+ * 產生範例 CSV 範本
  */
 export function downloadCSVTemplate(): void {
   const template = [
@@ -382,7 +382,7 @@ export function downloadCSVTemplate(): void {
 }
 
 /**
- * 导出为 JSON
+ * 匯出為 JSON
  */
 export function exportToJSON(data: any, filename: string): void {
   const jsonContent = JSON.stringify(data, null, 2)
@@ -390,7 +390,7 @@ export function exportToJSON(data: any, filename: string): void {
 }
 
 /**
- * 从 JSON 导入
+ * 從 JSON 匯入
  */
 export function importFromJSON(file: File): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -413,4 +413,3 @@ export function importFromJSON(file: File): Promise<any> {
     reader.readAsText(file, 'UTF-8')
   })
 }
-

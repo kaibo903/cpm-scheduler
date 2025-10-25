@@ -1,74 +1,73 @@
 /**
- * 依赖关系类型
+ * 依賴關係類型
  */
 export type DependencyType = 'FS' | 'SS' | 'FF' | 'SF'
 
 /**
- * 依赖关系
+ * 依賴關係
  */
 export interface Dependency {
-  taskId: string                // 关联任务ID
-  type: DependencyType          // 关系类型
-  lag?: number                  // 延迟时间（可选，默认为0）
+  taskId: string                // 關聯任務ID
+  type: DependencyType          // 關係類型
+  lag?: number                  // 延遲時間（可選，預設為0）
 }
 
 /**
- * CPM 任务数据结构
- * 包含工项的基本信息和 CPM 计算结果
+ * CPM 任務資料結構
+ * 包含工項的基本資訊和 CPM 計算結果
  */
 export interface CPMTask {
-  id: string                    // 唯一识别码
-  name: string                  // 工项名称
-  duration: number              // 工期（天数）
-  predecessors: Dependency[]    // 前置工项（含关系类型）
-  successors: Dependency[]      // 后续工项（含关系类型）
+  id: string                    // 唯一識別碼
+  name: string                  // 工項名稱
+  duration: number              // 工期（天數）
+  predecessors: Dependency[]    // 前置工項（含關係類型）
+  successors: Dependency[]      // 後續工項（含關係類型）
   
-  // CPM 计算结果
-  es?: number                   // 最早开始时间 (Earliest Start)
-  ef?: number                   // 最早完成时间 (Earliest Finish)
-  ls?: number                   // 最晚开始时间 (Latest Start)
-  lf?: number                   // 最晚完成时间 (Latest Finish)
-  tf?: number                   // 总浮时 (Total Float)
-  ff?: number                   // 自由浮时 (Free Float)
+  // CPM 計算結果
+  es?: number                   // 最早開始時間 (Earliest Start)
+  ef?: number                   // 最早完成時間 (Earliest Finish)
+  ls?: number                   // 最晚開始時間 (Latest Start)
+  lf?: number                   // 最晚完成時間 (Latest Finish)
+  tf?: number                   // 總浮時 (Total Float)
+  ff?: number                   // 自由浮時 (Free Float)
   
-  // 状态标记
-  isCritical?: boolean          // 是否为关键路径
-  isStart?: boolean             // 是否为起始节点
-  isEnd?: boolean               // 是否为结束节点
+  // 狀態標記
+  isCritical?: boolean          // 是否為關鍵路徑
+  isStart?: boolean             // 是否為起始節點
+  isEnd?: boolean               // 是否為結束節點
 }
 
 /**
- * CPM 计算结果数据结构
+ * CPM 計算結果資料結構
  */
 export interface CPMResult {
-  tasks: CPMTask[]              // 工项列表（含CPM计算结果）
-  criticalPath: string[]        // 关键路径任务ID
-  totalDuration: number         // 专案总工期
-  startTasks: string[]          // 起始任务ID
-  endTasks: string[]            // 结束任务ID
-  hasCycle: boolean             // 是否存在循环依赖
-  errors?: string[]             // 错误信息列表
+  tasks: CPMTask[]              // 工項列表（含CPM計算結果）
+  criticalPath: string[]        // 關鍵路徑任務ID
+  totalDuration: number         // 專案總工期
+  startTasks: string[]          // 起始任務ID
+  endTasks: string[]            // 結束任務ID
+  hasCycle: boolean             // 是否存在循環依賴
+  errors?: string[]             // 錯誤訊息列表
 }
 
 /**
- * 专案数据结构
+ * 專案資料結構
  */
 export interface Project {
-  id: string                    // 专案ID
-  name: string                  // 专案名称
-  tasks: CPMTask[]              // 工项列表
-  cpmResult?: CPMResult         // CPM计算结果
-  createdAt: Date               // 建立时间
-  updatedAt: Date               // 更新时间
+  id: string                    // 專案ID
+  name: string                  // 專案名稱
+  tasks: CPMTask[]              // 工項列表
+  cpmResult?: CPMResult         // CPM計算結果
+  createdAt: Date               // 建立時間
+  updatedAt: Date               // 更新時間
 }
 
 /**
- * 任务输入数据（用于CSV/Excel导入）
+ * 任務輸入資料（用於CSV/Excel匯入）
  */
 export interface TaskInput {
-  taskName: string              // 工项名称
+  taskName: string              // 工項名稱
   duration: number | string     // 工期
-  predecessor?: string          // 前置作业
-  successor?: string            // 后续作业
+  predecessor?: string          // 前置作業
+  successor?: string            // 後續作業
 }
-
