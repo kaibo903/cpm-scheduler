@@ -2,7 +2,7 @@ import type { CPMTask, CPMResult, Dependency } from '../types'
 
 /**
  * CPM (Critical Path Method) 引擎
- * 實作關鍵路徑法的完整演算法
+ * 實作要徑法的完整演算法
  */
 
 /**
@@ -338,7 +338,7 @@ function backwardPass(tasks: CPMTask[], sortedIds: string[]): void {
 }
 
 /**
- * 計算浮時和識別關鍵路徑
+ * 計算浮時和識別要徑
  */
 function calculateFloatAndCriticalPath(tasks: CPMTask[]): string[] {
   const criticalPath: string[] = []
@@ -399,7 +399,7 @@ function calculateFloatAndCriticalPath(tasks: CPMTask[]): string[] {
         task.ff = minFloat === Infinity ? 0 : Math.max(0, minFloat)
       }
       
-      // 標記關鍵路徑（TF = 0）
+      // 標記要徑（TF = 0）
       task.isCritical = Math.abs(task.tf) < 0.001 // 使用小誤差範圍
       
       if (task.isCritical) {
@@ -418,7 +418,7 @@ function validateTasks(tasks: CPMTask[]): string[] {
   const errors: string[] = []
   
   if (tasks.length === 0) {
-    errors.push('至少需要一個工項')
+    errors.push('至少需要一個作業')
     return errors
   }
 
@@ -427,21 +427,21 @@ function validateTasks(tasks: CPMTask[]): string[] {
   tasks.forEach((task, index) => {
     // 檢查必填欄位
     if (!task.id) {
-      errors.push(`工項 ${index + 1}: 缺少ID`)
+      errors.push(`作業 ${index + 1}: 缺少ID`)
     }
     if (!task.name) {
-      errors.push(`工項 ${index + 1}: 缺少名稱`)
+      errors.push(`作業 ${index + 1}: 缺少名稱`)
     }
     if (task.duration === undefined || task.duration === null) {
-      errors.push(`工項 "${task.name}": 缺少工期`)
+      errors.push(`作業 "${task.name}": 缺少工期`)
     }
     if (task.duration <= 0) {
-      errors.push(`工項 "${task.name}": 工期必須為正數`)
+      errors.push(`作業 "${task.name}": 工期必須為正數`)
     }
     
     // 檢查重複ID
     if (taskIds.has(task.id)) {
-      errors.push(`工項 "${task.name}": ID重複`)
+      errors.push(`作業 "${task.name}": ID重複`)
     }
     taskIds.add(task.id)
   })
@@ -451,13 +451,13 @@ function validateTasks(tasks: CPMTask[]): string[] {
     task.predecessors.forEach(predDep => {
       const predId = predDep.taskId
       if (!taskIds.has(predId)) {
-        errors.push(`工項 "${task.name}": 前置工項 "${predId}" 不存在`)
+        errors.push(`作業 "${task.name}": 前置作業 "${predId}" 不存在`)
       }
     })
     task.successors.forEach(succDep => {
       const succId = succDep.taskId
       if (!taskIds.has(succId)) {
-        errors.push(`工項 "${task.name}": 後續工項 "${succId}" 不存在`)
+        errors.push(`作業 "${task.name}": 後續作業 "${succId}" 不存在`)
       }
     })
   })
@@ -509,7 +509,7 @@ export function calculateCPM(tasks: CPMTask[]): CPMResult {
   // Backward Pass
   backwardPass(tasksCopy, sortedIds)
 
-  // 計算浮時和識別關鍵路徑
+  // 計算浮時和識別要徑
   const criticalPath = calculateFloatAndCriticalPath(tasksCopy)
 
   // 計算總工期

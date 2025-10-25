@@ -8,28 +8,28 @@
           <span class="value highlight">{{ cpmResult.totalDuration }} 天</span>
         </div>
         <div class="summary-item">
-          <span class="label">關鍵工項數量：</span>
+          <span class="label">要徑作業數量：</span>
           <span class="value">{{ cpmResult.criticalPath.length }} 項</span>
         </div>
       </div>
     </div>
 
     <div v-if="cpmResult?.errors && cpmResult.errors.length > 0" class="error-box">
-      <h3>⚠️ 錯誤訊息</h3>
+      <h3><span class="warning-icon"></span>錯誤訊息</h3>
       <ul>
         <li v-for="(error, index) in cpmResult.errors" :key="index">{{ error }}</li>
       </ul>
     </div>
 
     <div v-if="cpmResult?.hasCycle" class="warning-box">
-      <h3>⚠️ 檢測到循環依賴</h3>
-      <p>工項之間存在循環依賴關係，無法進行 CPM 計算。請檢查並修正依賴關係。</p>
+      <h3><span class="warning-icon"></span>檢測到循環依賴</h3>
+      <p>作業之間存在循環依賴關係，無法進行 CPM 計算。請檢查並修正依賴關係。</p>
     </div>
 
     <div v-if="cpmResult && !cpmResult.hasCycle && (!cpmResult.errors || cpmResult.errors.length === 0)">
-      <!-- 關鍵路徑顯示 -->
+      <!-- 要徑顯示 -->
       <div class="critical-path-section">
-        <h3>🔴 關鍵路徑</h3>
+        <h3><span class="dot"></span>要徑</h3>
         <div class="critical-path-flow">
           <div 
             v-for="(taskId, index) in cpmResult.criticalPath" 
@@ -49,15 +49,15 @@
           <table>
             <thead>
               <tr>
-                <th>工項名稱</th>
-                <th>工期(天)</th>
+                <th>作業名稱</th>
+                <th class="right">工期(天)</th>
                 <th>ES</th>
                 <th>EF</th>
                 <th>LS</th>
                 <th>LF</th>
                 <th>TF</th>
                 <th>FF</th>
-                <th>關鍵工項</th>
+                <th>要徑作業</th>
               </tr>
             </thead>
             <tbody>
@@ -119,7 +119,7 @@
     </div>
 
     <div v-if="!cpmResult" class="empty-state">
-      <p>尚未進行 CPM 計算，請先新增工項並點擊「計算排程」</p>
+      <p>尚未進行 CPM 計算，請先新增作業並點擊「計算排程」</p>
     </div>
   </div>
 </template>
@@ -215,6 +215,31 @@ function getTaskName(taskId: string): string {
   color: #c33;
   font-size: 15px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-box h3 .warning-icon,
+.warning-box h3 .warning-icon {
+  width: 16px;
+  height: 16px;
+  background: #ff9800;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.error-box h3 .warning-icon::before,
+.warning-box h3 .warning-icon::before {
+  content: '!';
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .error-box ul {
@@ -242,6 +267,18 @@ function getTaskName(taskId: string): string {
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.critical-path-section h3 .dot {
+  width: 10px;
+  height: 10px;
+  background: #d9534f;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .critical-path-flow {
@@ -322,6 +359,10 @@ th {
 
 th:first-child {
   text-align: left;
+}
+
+th.right {
+  text-align: right;
 }
 
 td {

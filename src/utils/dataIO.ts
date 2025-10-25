@@ -4,7 +4,7 @@ import type { CPMTask, CPMResult, TaskInput } from '../types'
  * 匯出任務為 CSV（5欄擴充格式）
  */
 export function exportTasksToCSV(tasks: CPMTask[]): void {
-  const headers = ['工項名稱', '工期(天)', '前置作業', '關係型式', 'Lag(天)']
+  const headers = ['作業名稱', '工期(天)', '前置作業', '關係型式', 'Lag(天)']
   const taskMap = new Map(tasks.map(t => [t.id, t]))
   
   const rows = tasks.map(task => {
@@ -75,7 +75,7 @@ export function exportTasksToCSV(tasks: CPMTask[]): void {
  */
 export function exportCPMResultToCSV(cpmResult: CPMResult): void {
   const headers = [
-    '工項名稱', '工期(天)', 'ES', 'EF', 'LS', 'LF', 'TF', 'FF', '關鍵工項'
+    '作業名稱', '工期(天)', 'ES', 'EF', 'LS', 'LF', 'TF', 'FF', '要徑作業'
   ]
   
   const rows = cpmResult.tasks.map(task => [
@@ -146,7 +146,7 @@ function parseCSV(text: string): CPMTask[] {
     return 'FS' // 預設值
   }
 
-  // 輔助函式：解析任務名稱、類型和lag，例如 "工項A(FS Lag5)" -> {name: "工項A", type: "FS", lag: 5}
+  // 輔助函式：解析任務名稱、類型和lag，例如 "作業A(FS Lag5)" -> {name: "作業A", type: "FS", lag: 5}
   function parseTaskWithType(str: string): { name: string; type: 'FS' | 'SS' | 'FF' | 'SF'; lag: number } {
     // 匹配格式: "任務名(類型 Lag數值)" 或 "任務名(類型)"
     const matchWithLag = str.match(/^(.+?)\(([FS\-]+)\s+Lag([+-]?\d+)\)$/i)
@@ -323,22 +323,22 @@ function downloadFile(content: string, filename: string, mimeType: string): void
 }
 
 /**
- * 匯出關鍵路徑報告
+ * 匯出要徑報告
  */
 export function exportCriticalPathReport(cpmResult: CPMResult): void {
   const taskMap = new Map(cpmResult.tasks.map(t => [t.id, t]))
   const criticalTasks = cpmResult.criticalPath.map(id => taskMap.get(id)).filter(Boolean)
   
-  let report = '關鍵路徑分析報告\n'
+  let report = '要徑分析報告\n'
   report += '='.repeat(50) + '\n\n'
   
   report += `專案總工期：${cpmResult.totalDuration} 天\n`
-  report += `關鍵工項數量：${cpmResult.criticalPath.length} 項\n\n`
+  report += `要徑作業數量：${cpmResult.criticalPath.length} 項\n\n`
   
-  report += '關鍵路徑：\n'
+  report += '要徑：\n'
   report += criticalTasks.map(t => t?.name).join(' → ') + '\n\n'
   
-  report += '關鍵工項詳細資訊：\n'
+  report += '要徑作業詳細資訊：\n'
   report += '-'.repeat(50) + '\n'
   
   criticalTasks.forEach((task, index) => {
@@ -353,7 +353,7 @@ export function exportCriticalPathReport(cpmResult: CPMResult): void {
     report += '\n'
   })
   
-  report += '\n其他工項浮時分析：\n'
+  report += '\n其他作業浮時分析：\n'
   report += '-'.repeat(50) + '\n'
   
   const nonCriticalTasks = cpmResult.tasks.filter(t => !t.isCritical)
@@ -369,7 +369,7 @@ export function exportCriticalPathReport(cpmResult: CPMResult): void {
  */
 export function downloadCSVTemplate(): void {
   const template = [
-    ['工項名稱', '工期(天)', '前置作業', '關係型式', 'Lag(天)'],
+    ['作業名稱', '工期(天)', '前置作業', '關係型式', 'Lag(天)'],
     ['地質調查', '5', '---', '---', '---'],
     ['初步設計', '10', '地質調查', 'F-S', '0'],
     ['結構設計', '15', '初步設計', 'F-S', '0'],

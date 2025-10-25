@@ -14,14 +14,14 @@ export interface Dependency {
 
 /**
  * CPM 任務資料結構
- * 包含工項的基本資訊和 CPM 計算結果
+ * 包含作業的基本資訊和 CPM 計算結果
  */
 export interface CPMTask {
   id: string                    // 唯一識別碼
-  name: string                  // 工項名稱
+  name: string                  // 作業名稱
   duration: number              // 工期（天數）
-  predecessors: Dependency[]    // 前置工項（含關係類型）
-  successors: Dependency[]      // 後續工項（含關係類型）
+  predecessors: Dependency[]    // 前置作業（含關係類型）
+  successors: Dependency[]      // 後續作業（含關係類型）
   
   // CPM 計算結果
   es?: number                   // 最早開始時間 (Earliest Start)
@@ -32,7 +32,7 @@ export interface CPMTask {
   ff?: number                   // 自由浮時 (Free Float)
   
   // 狀態標記
-  isCritical?: boolean          // 是否為關鍵路徑
+  isCritical?: boolean          // 是否為要徑
   isStart?: boolean             // 是否為起始節點
   isEnd?: boolean               // 是否為結束節點
 }
@@ -41,8 +41,8 @@ export interface CPMTask {
  * CPM 計算結果資料結構
  */
 export interface CPMResult {
-  tasks: CPMTask[]              // 工項列表（含CPM計算結果）
-  criticalPath: string[]        // 關鍵路徑任務ID
+  tasks: CPMTask[]              // 作業列表（含CPM計算結果）
+  criticalPath: string[]        // 要徑任務ID
   totalDuration: number         // 專案總工期
   startTasks: string[]          // 起始任務ID
   endTasks: string[]            // 結束任務ID
@@ -56,7 +56,7 @@ export interface CPMResult {
 export interface Project {
   id: string                    // 專案ID
   name: string                  // 專案名稱
-  tasks: CPMTask[]              // 工項列表
+  tasks: CPMTask[]              // 作業列表
   cpmResult?: CPMResult         // CPM計算結果
   createdAt: Date               // 建立時間
   updatedAt: Date               // 更新時間
@@ -66,7 +66,7 @@ export interface Project {
  * 任務輸入資料（用於CSV/Excel匯入）
  */
 export interface TaskInput {
-  taskName: string              // 工項名稱
+  taskName: string              // 作業名稱
   duration: number | string     // 工期
   predecessor?: string          // 前置作業
   successor?: string            // 後續作業

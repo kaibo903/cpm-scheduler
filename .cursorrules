@@ -1,0 +1,416 @@
+# 工程進度規劃與控制課程解答工具 - Cursor AI 開發規則
+
+## 📋 專案概述
+本專案是一個工程進度規劃與控制的學習輔助工具，提供 CPM (Critical Path Method) 計算、甘特圖視覺化、PDM 網圖繪製等功能。
+
+## 🎯 程式碼註解規範
+
+### 1. 註解語言
+- **必須使用繁體中文**
+- 避免使用簡體中文或僅英文註解
+- 專業術語可保留英文縮寫（如 CPM, ES, EF, LS, LF）
+
+### 2. 註解格式
+
+#### 模組開頭註解
+```typescript
+/**
+ * 📦 模組名稱
+ * 
+ * 功能說明：描述此模組的主要功能與用途
+ * 
+ * 主要功能：
+ * - 功能點 1
+ * - 功能點 2
+ * - 功能點 3
+ */
+```
+
+#### 函式註解
+```typescript
+/**
+ * 🔧 函式功能簡述
+ * 
+ * @param paramName - 參數說明
+ * @returns 回傳值說明
+ * 
+ * 📝 範例：
+ * ```typescript
+ * const result = functionName(param)
+ * ```
+ */
+```
+
+#### 重要邏輯區塊
+```typescript
+// 🔍 此段落功能說明
+// 執行步驟：
+// 1. 第一步驟說明
+// 2. 第二步驟說明
+```
+
+#### 變數與常數
+```typescript
+// 📊 變數用途說明
+const VARIABLE_NAME = value
+
+// ⚙️ 常數用途與單位說明
+const CELL_HEIGHT = 85  // 格子高度（像素）
+```
+
+### 3. 表情符號使用指南
+
+| 表情符號 | 用途 | 範例 |
+|---------|------|------|
+| 📦 | 模組定義 | `// 📦 CPM 計算引擎` |
+| 🔧 | 函式功能 | `// 🔧 計算最早開始時間` |
+| 📊 | 資料處理 | `// 📊 處理任務資料` |
+| 🎨 | UI/視覺化 | `// 🎨 繪製甘特圖` |
+| 🔍 | 邏輯判斷 | `// 🔍 檢查循環依賴` |
+| ⚙️ | 配置設定 | `// ⚙️ 設定圖表參數` |
+| 🚀 | 初始化/啟動 | `// 🚀 初始化組件` |
+| 📝 | 範例說明 | `// 📝 使用範例` |
+| ⚠️ | 注意事項 | `// ⚠️ 注意：此處可能產生負值` |
+| ✅ | 驗證檢查 | `// ✅ 驗證輸入資料` |
+| 🔄 | 迴圈/遍歷 | `// 🔄 遍歷所有任務` |
+| 💾 | 儲存/匯出 | `// 💾 儲存結果到檔案` |
+| 📥 | 匯入/讀取 | `// 📥 讀取 CSV 檔案` |
+| 🎯 | 目標/結果 | `// 🎯 計算目標：找出要徑` |
+| 🧮 | 數學計算 | `// 🧮 計算總浮時 TF = LS - ES` |
+| 🔗 | 關聯/連結 | `// 🔗 建立任務依賴關係` |
+
+### 4. Vue 組件註解規範
+
+#### Template 區塊
+```vue
+<template>
+  <!-- 🎨 主要容器 -->
+  <div class="container">
+    
+    <!-- 📊 資料表格區域 -->
+    <div class="table-section">
+      <!-- 表格內容 -->
+    </div>
+    
+    <!-- 🎛️ 控制按鈕區域 -->
+    <div class="controls">
+      <!-- 按鈕群組 -->
+    </div>
+    
+  </div>
+</template>
+```
+
+#### Script 區塊
+```vue
+<script setup lang="ts">
+// 📦 模組匯入
+import { ref, computed, watch } from 'vue'
+
+// 📊 介面定義
+interface DataType {
+  // 屬性說明
+}
+
+// 🎯 組件屬性定義
+const props = defineProps<{
+  data: DataType  // 資料內容
+}>()
+
+// 🔄 響應式狀態
+const activeTab = ref('gantt')  // 當前啟用的分頁
+
+// 🧮 計算屬性
+const totalCount = computed(() => {
+  // 計算邏輯說明
+  return props.data.length
+})
+
+// 🔧 方法定義
+function handleClick() {
+  // 功能說明
+}
+
+// 👀 監聽器
+watch(() => props.data, (newVal) => {
+  // 監聽邏輯說明
+})
+
+// 🚀 生命週期
+onMounted(() => {
+  // 初始化邏輯
+})
+</script>
+```
+
+#### Style 區塊
+```vue
+<style scoped>
+/* 🎨 主容器樣式 */
+.container {
+  /* 樣式說明 */
+}
+
+/* 📊 表格樣式 */
+.table {
+  /* 樣式說明 */
+}
+
+/* 🎛️ 按鈕樣式 */
+.btn {
+  /* 樣式說明 */
+}
+</style>
+```
+
+### 5. TypeScript 類型註解
+
+```typescript
+/**
+ * 📋 資料類型定義
+ * 
+ * 用途：描述 CPM 任務的完整資訊
+ */
+export interface CPMTask {
+  id: string           // 唯一識別碼
+  name: string         // 任務名稱
+  duration: number     // 工期（天）
+  es?: number          // 最早開始時間 (Earliest Start)
+  ef?: number          // 最早完成時間 (Earliest Finish)
+  ls?: number          // 最晚開始時間 (Latest Start)
+  lf?: number          // 最晚完成時間 (Latest Finish)
+  tf?: number          // 總浮時 (Total Float)
+  ff?: number          // 自由浮時 (Free Float)
+  isCritical?: boolean // 是否為要徑作業
+}
+```
+
+### 6. 演算法與複雜邏輯註解
+
+對於複雜的演算法，需要詳細說明：
+
+```typescript
+/**
+ * 🧮 Forward Pass 演算法
+ * 
+ * 目的：計算每個任務的最早開始時間 (ES) 和最早完成時間 (EF)
+ * 
+ * 演算法步驟：
+ * 1. 按照拓撲排序順序遍歷任務
+ * 2. 對於沒有前置任務的任務，ES = 0
+ * 3. 對於有前置任務的任務：
+ *    - 檢查所有前置任務的約束條件
+ *    - ES = max(所有前置任務的約束時間)
+ * 4. EF = ES + duration
+ * 
+ * 📝 約束類型說明：
+ * - FS (Finish-to-Start): 後續任務必須在前置任務完成後才能開始
+ * - SS (Start-to-Start): 兩個任務的開始時間有關聯
+ * - FF (Finish-to-Finish): 兩個任務的完成時間有關聯
+ * - SF (Start-to-Finish): 前置任務的開始影響後續任務的完成
+ * 
+ * @param tasks - 任務陣列
+ * @param sortedIds - 拓撲排序後的任務 ID 陣列
+ */
+function forwardPass(tasks: CPMTask[], sortedIds: string[]): void {
+  // 🔗 建立任務映射表，方便快速查找
+  const taskMap = new Map<string, CPMTask>()
+  tasks.forEach(task => taskMap.set(task.id, task))
+
+  // 🔄 按拓撲順序遍歷每個任務
+  for (const taskId of sortedIds) {
+    const task = taskMap.get(taskId)!
+    
+    // 🔍 判斷是否為起始任務
+    if (task.predecessors.length === 0) {
+      task.es = 0  // 起始任務從第 0 天開始
+      task.isStart = true
+    } else {
+      // 🧮 計算最早開始時間
+      let maxES = 0
+      
+      // 🔄 檢查所有前置任務的約束
+      for (const predDep of task.predecessors) {
+        const pred = taskMap.get(predDep.taskId)
+        if (pred && pred.ef !== undefined) {
+          // 根據依賴類型計算約束時間
+          const constraintTime = calculateConstraint(predDep, pred, task)
+          maxES = Math.max(maxES, constraintTime)
+        }
+      }
+      
+      // 📊 設定最早開始時間（不可為負）
+      task.es = Math.max(0, maxES)
+    }
+    
+    // 🧮 計算最早完成時間
+    task.ef = task.es + task.duration
+  }
+}
+```
+
+### 7. 事件處理註解
+
+```typescript
+// 🖱️ 滑鼠事件處理
+function handleMouseClick(event: MouseEvent) {
+  // 獲取點擊位置
+  const x = event.clientX
+  const y = event.clientY
+  
+  // 執行對應操作
+  performAction(x, y)
+}
+
+// ⌨️ 鍵盤事件處理
+function handleKeyPress(event: KeyboardEvent) {
+  // 根據按鍵執行不同操作
+  switch(event.key) {
+    case 'Enter':
+      // 確認操作
+      break
+    case 'Escape':
+      // 取消操作
+      break
+  }
+}
+```
+
+### 8. API 與資料流註解
+
+```typescript
+/**
+ * 📡 API 呼叫
+ * 
+ * 端點：/api/calculate-cpm
+ * 方法：POST
+ * 
+ * 請求格式：
+ * {
+ *   tasks: CPMTask[]
+ * }
+ * 
+ * 回應格式：
+ * {
+ *   result: CPMResult
+ * }
+ */
+async function calculateCPMAPI(tasks: CPMTask[]): Promise<CPMResult> {
+  // 📤 發送請求
+  const response = await fetch('/api/calculate-cpm', {
+    method: 'POST',
+    body: JSON.stringify({ tasks })
+  })
+  
+  // 📥 接收回應
+  const data = await response.json()
+  
+  return data.result
+}
+```
+
+## 🔄 資料流說明
+
+在處理複雜的資料流時，需要清楚標註資料的轉換過程：
+
+```typescript
+// 📊 資料流程：
+// 1. 用戶輸入 → TaskInput 組件
+// 2. 驗證資料 → validateTasks()
+// 3. 建立依賴 → buildTaskDependencies()
+// 4. CPM 計算 → calculateCPM()
+// 5. 產生結果 → CPMResult
+// 6. 視覺化顯示 → GanttChart / PDMDiagram
+```
+
+## ⚙️ 程式碼品質要求
+
+### 1. 函式大小
+- 單一函式不超過 50 行（複雜演算法除外）
+- 超過時需要拆分成多個小函式
+- 每個小函式都需要有清楚的功能註解
+
+### 2. 變數命名
+- 使用有意義的變數名稱
+- 避免單字母變數（迴圈索引除外）
+- 重要變數需要加上註解說明
+
+### 3. 錯誤處理
+```typescript
+try {
+  // 🔧 執行操作
+  performOperation()
+} catch (error) {
+  // ⚠️ 錯誤處理
+  console.error('操作失敗：', error)
+  // 顯示錯誤訊息給用戶
+  showErrorMessage('操作失敗，請稍後再試')
+}
+```
+
+## 📝 提交訊息規範
+
+使用語義化提交訊息：
+
+```
+✨ feat: 新增 XXX 功能
+🐛 fix: 修正 XXX 錯誤
+📝 docs: 更新文件說明
+🎨 style: 調整樣式/格式
+♻️ refactor: 重構 XXX 程式碼
+⚡ perf: 效能優化
+✅ test: 新增測試
+🔧 chore: 更新設定檔
+```
+
+## 🎯 核心模組說明
+
+### 1. CPM 引擎 (cpmEngine.ts)
+- 功能：執行要徑法計算
+- 主要函式：calculateCPM, forwardPass, backwardPass
+- 關鍵演算法：拓撲排序、循環依賴檢測
+
+### 2. 甘特圖 (GanttChart.vue)
+- 功能：繪製甘特圖視覺化
+- 互動：滑鼠縮放、拖曳、hover 提示
+- 顯示模式：標準模式、要徑優先模式
+
+### 3. PDM 網圖 (PDMDiagram.vue)
+- 功能：繪製 PDM 節點式網圖
+- 顯示模式：簡潔模式、詳細模式
+- 智能佈局：自動避障、最小化線條彎曲
+
+### 4. 資料處理 (dataIO.ts)
+- 功能：CSV 匯入匯出、報告產生
+- 支援格式：3欄格式、5欄擴充格式
+- 編碼處理：UTF-8 with BOM
+
+## 🚀 開發流程
+
+1. **新增功能前**
+   - 先規劃功能架構
+   - 定義清楚的介面與類型
+   - 撰寫功能說明註解
+
+2. **開發過程中**
+   - 邊寫程式邊加註解
+   - 複雜邏輯加上詳細說明
+   - 關鍵變數標註用途
+
+3. **完成功能後**
+   - 檢查註解完整性
+   - 確認繁體中文正確性
+   - 更新相關文件
+
+## 📚 參考資源
+
+- CPM 理論：Critical Path Method
+- PDM 網圖：Precedence Diagramming Method
+- 依賴類型：FS, SS, FF, SF
+- D3.js：資料視覺化函式庫
+- Vue 3：前端框架
+
+---
+
+**重要提醒**：所有新增或修改的程式碼都必須遵循以上規範，確保程式碼的可維護性與可讀性！
+

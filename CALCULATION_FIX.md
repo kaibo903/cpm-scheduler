@@ -130,7 +130,7 @@ switch (succDep.type) {
 ### 直接影響
 1. **LS/LF 計算**：更準確地處理混合依賴類型的約束
 2. **Free Float**：正確反映不同依賴類型的浮時
-3. **關鍵路徑識別**：基於更準確的 Total Float (TF = LS - ES)
+3. **要徑識別**：基於更準確的 Total Float (TF = LS - ES)
 
 ### 潛在改善
 1. 混合使用 SS、SF、FS、FF 的複雜網路圖計算更準確

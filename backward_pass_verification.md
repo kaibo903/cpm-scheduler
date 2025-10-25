@@ -27,7 +27,7 @@ predecessor.EF + lag ≤ successor.ES
 
 **反向推導：**
 ```
-在關鍵路徑上，約束是緊的（等式）：
+在要徑上，約束是緊的（等式）：
   predecessor.EF + lag = successor.ES
 
 對於最晚時間：
@@ -57,7 +57,7 @@ predecessor.ES + lag ≤ successor.ES
 
 **反向推導：**
 ```
-在關鍵路徑上：
+在要徑上：
   predecessor.ES + lag = successor.ES
 
 對於最晚時間：
@@ -87,7 +87,7 @@ predecessor.EF + lag ≤ successor.EF
 
 **反向推導：**
 ```
-在關鍵路徑上：
+在要徑上：
   predecessor.EF + lag = successor.EF
 
 對於最晚時間：
@@ -117,7 +117,7 @@ predecessor.ES + lag ≤ successor.EF
 
 **反向推導：**
 ```
-在關鍵路徑上：
+在要徑上：
   predecessor.ES + lag = successor.EF
 
 對於最晚時間：

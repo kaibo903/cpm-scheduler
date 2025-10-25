@@ -1,0 +1,335 @@
+<template>
+  <div class="container">
+    <!-- 🔙 頂部導航列：返回按鈕 + 頁面標題 -->
+    <div class="top-navigation">
+      <router-link to="/tools" class="back-button">
+        ← 返回工具列表
+      </router-link>
+      <h2 class="page-title">進度規劃</h2>
+    </div>
+
+    <!-- 🛠️ 工具列 -->
+    <div class="toolbar">
+      <div class="toolbar-section">
+        <button class="btn btn-outline" @click="showImportDialog = true">
+          匯入 CSV
+        </button>
+        <button class="btn btn-outline" @click="downloadTemplate">
+          下載 CSV範本
+        </button>
+      </div>
+      
+      <div class="toolbar-section" v-if="tasks.length > 0">
+        <button class="btn btn-outline" @click="exportTasks">
+          匯出作業
+        </button>
+        <button class="btn btn-outline" @click="exportResults" :disabled="!cpmResult">
+          匯出結果
+        </button>
+        <button class="btn btn-outline" @click="exportReport" :disabled="!cpmResult">
+          匯出報告
+        </button>
+      </div>
+    </div>
+
+    <!-- 📐 左右分欄佈局 -->
+    <div class="main-layout">
+      <!-- 左側：任務輸入 -->
+      <div class="left-panel">
+        <TaskInput
+          :tasks="tasks"
+          @add-task="handleAddTask"
+          @update-task="handleUpdateTask"
+          @remove-task="handleRemoveTask"
+          @clear-tasks="handleClearTasks"
+          @calculate="handleCalculate"
+        />
+      </div>
+
+      <!-- 右側：CPM 計算結果 -->
+      <div class="right-panel" v-if="cpmResult">
+        <CPMResultTable :cpm-result="cpmResult" />
+      </div>
+    </div>
+
+    <!-- 📊 視覺化圖表區（分頁顯示）-->
+    <section class="section" v-if="cpmResult && !cpmResult.hasCycle">
+      <div class="chart-container">
+        <div class="chart-tabs">
+          <button 
+            class="tab-button" 
+            :class="{ active: activeTab === 'gantt' }"
+            @click="activeTab = 'gantt'">
+            Bar Chart
+          </button>
+          <button 
+            class="tab-button" 
+            :class="{ active: activeTab === 'pdm' }"
+            @click="activeTab = 'pdm'">
+            PDM
+          </button>
+        </div>
+        
+        <div class="chart-content">
+          <div v-show="activeTab === 'gantt'" class="chart-panel">
+            <GanttChart :cpm-result="cpmResult" />
+          </div>
+          <div v-show="activeTab === 'pdm'" class="chart-panel">
+            <PDMDiagram :cpm-result="cpmResult" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 💬 提示消息 -->
+    <div v-if="message" class="message" :class="messageType">
+      {{ message }}
+    </div>
+  </div>
+
+  <!-- 📥 匯入對話框 -->
+  <div v-if="showImportDialog" class="modal-overlay" @click="showImportDialog = false">
+    <div class="modal" @click.stop>
+      <div class="modal-header">
+        <h3>匯入 CSV 檔案</h3>
+        <button class="close-btn" @click="showImportDialog = false">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">
+          選擇包含作業資料的 CSV 檔案。檔案應包含以下欄位：
+          <br>作業名稱、工期(天)、前置作業、後續作業
+        </p>
+        <input 
+          type="file" 
+          accept=".csv,.txt" 
+          @change="handleFileImport"
+          ref="fileInput"
+          class="file-input"
+        />
+        <div class="modal-actions">
+          <button class="btn btn-secondary" @click="showImportDialog = false">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * 📦 進度規劃頁面組件
+ * 
+ * 功能說明：
+ * - CPM 計算與任務管理
+ * - 甘特圖與 PDM 網圖視覺化
+ * - CSV 匯入匯出功能
+ */
+
+import { ref } from 'vue'
+import TaskInput from '../components/TaskInput.vue'
+import CPMResultTable from '../components/CPMResultTable.vue'
+import GanttChart from '../components/GanttChart.vue'
+import PDMDiagram from '../components/PDMDiagram.vue'
+import type { CPMTask, CPMResult } from '../types'
+import { calculateCPM, buildTaskDependencies } from '../utils/cpmEngine'
+import {
+  exportTasksToCSV,
+  exportCPMResultToCSV,
+  exportCriticalPathReport,
+  importTasksFromCSV,
+  downloadCSVTemplate
+} from '../utils/dataIO'
+
+// 🔄 響應式狀態
+const tasks = ref<CPMTask[]>([])
+const cpmResult = ref<CPMResult | null>(null)
+const message = ref('')
+const messageType = ref<'success' | 'error' | 'info'>('info')
+const showImportDialog = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const activeTab = ref<'gantt' | 'pdm'>('gantt')
+
+// 🔧 任務管理函式
+function handleAddTask(task: CPMTask) {
+  tasks.value.push(task)
+  buildTaskDependencies(tasks.value)
+  showMessage('作業已新增', 'success')
+}
+
+function handleUpdateTask(updatedTask: CPMTask) {
+  const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+  if (index !== -1) {
+    tasks.value[index] = updatedTask
+    buildTaskDependencies(tasks.value)
+    showMessage('作業已更新', 'success')
+  }
+}
+
+function handleRemoveTask(taskId: string) {
+  tasks.value = tasks.value.filter(t => t.id !== taskId)
+  buildTaskDependencies(tasks.value)
+  showMessage('作業已刪除', 'success')
+}
+
+function handleClearTasks() {
+  tasks.value = []
+  cpmResult.value = null
+  showMessage('已清空所有作業', 'info')
+}
+
+// 🧮 CPM 計算函式
+function handleCalculate() {
+  if (tasks.value.length === 0) {
+    showMessage('請先新增作業', 'error')
+    return
+  }
+  
+  try {
+    cpmResult.value = calculateCPM(tasks.value)
+    showMessage('計算完成', 'success')
+  } catch (error) {
+    showMessage('計算失敗：' + (error as Error).message, 'error')
+  }
+}
+
+// 💾 匯出函式
+function exportTasks() {
+  try {
+    exportTasksToCSV(tasks.value)
+    showMessage('作業資料已匯出', 'success')
+  } catch (error) {
+    showMessage('匯出失敗：' + (error as Error).message, 'error')
+  }
+}
+
+function exportResults() {
+  if (!cpmResult.value) return
+  
+  try {
+    exportCPMResultToCSV(cpmResult.value)
+    showMessage('CPM 結果已匯出', 'success')
+  } catch (error) {
+    showMessage('匯出失敗：' + (error as Error).message, 'error')
+  }
+}
+
+function exportReport() {
+  if (!cpmResult.value) return
+  
+  try {
+    exportCriticalPathReport(cpmResult.value)
+    showMessage('要徑報告已匯出', 'success')
+  } catch (error) {
+    showMessage('匯出失敗：' + (error as Error).message, 'error')
+  }
+}
+
+// 📥 匯入函式
+function downloadTemplate() {
+  try {
+    downloadCSVTemplate()
+    showMessage('範本已下載', 'success')
+  } catch (error) {
+    showMessage('下載失敗：' + (error as Error).message, 'error')
+  }
+}
+
+async function handleFileImport(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  
+  if (!file) return
+  
+  try {
+    const importedTasks = await importTasksFromCSV(file)
+    tasks.value = importedTasks
+    buildTaskDependencies(tasks.value)
+    showImportDialog.value = false
+    showMessage(`成功匯入 ${importedTasks.length} 筆作業`, 'success')
+    
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+  } catch (error) {
+    showMessage('匯入失敗：' + (error as Error).message, 'error')
+  }
+}
+
+// 💬 訊息顯示函式
+function showMessage(msg: string, type: 'success' | 'error' | 'info') {
+  message.value = msg
+  messageType.value = type
+  
+  setTimeout(() => {
+    const messageEl = document.querySelector('.message')
+    if (messageEl) {
+      messageEl.classList.add('slide-out')
+    }
+  }, 1700)
+  
+  setTimeout(() => {
+    message.value = ''
+  }, 2000)
+}
+</script>
+
+<style scoped>
+/* ==========================================
+   🔙 頂部導航列樣式
+   ========================================== */
+
+.top-navigation {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+  padding: 10px 0;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  background: #fff;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.back-button:hover {
+  color: #333;
+  border-color: #333;
+  background: #fafafa;
+}
+
+.page-title {
+  font-size: 20px;
+  color: #666;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+/* 📱 響應式設計 */
+@media (max-width: 768px) {
+  .top-navigation {
+    margin-bottom: 20px;
+    padding: 16px 0;
+    gap: 16px;
+  }
+
+  .back-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+}
+</style>

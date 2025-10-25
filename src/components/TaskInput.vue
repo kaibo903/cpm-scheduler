@@ -1,20 +1,20 @@
 <template>
   <div class="task-input">
     <div class="task-input-header">
-      <h2>工項輸入</h2>
-      <p class="subtitle">輸入工項名稱、工期和依賴關係</p>
+      <h2>作業輸入</h2>
+      <p class="subtitle">輸入作業名稱、工期和依賴關係</p>
     </div>
 
     <div class="input-form">
       <div class="form-container">
         <div class="basic-info-row">
           <div class="form-group form-group-name">
-            <label for="task-name">工項名稱</label>
+            <label for="task-name">作業名稱</label>
             <input
               id="task-name"
               v-model="newTask.name"
               type="text"
-              placeholder="請輸入工項名稱"
+              placeholder="請輸入作業名稱"
               @keyup.enter="addTask"
             />
           </div>
@@ -33,7 +33,7 @@
 
           <div class="form-group button-group">
             <button class="btn btn-primary" @click="addTask" :disabled="!isFormValid">
-              {{ editingTaskId ? '更新工項' : '新增工項' }}
+              {{ editingTaskId ? '更新作業' : '新增作業' }}
             </button>
             <button v-if="editingTaskId" class="btn btn-secondary" @click="cancelEdit">
               取消
@@ -158,12 +158,12 @@
     </div>
 
     <div class="task-list" v-if="tasks.length > 0">
-      <h3>已新增工項 ({{ tasks.length }})</h3>
+      <h3>已新增作業 <span class="count">({{ tasks.length }})</span></h3>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>工項名稱</th>
+              <th>作業名稱</th>
               <th>工期(天)</th>
               <th>前置作業</th>
               <th>後續作業</th>
@@ -205,15 +205,15 @@
     </div>
 
     <div class="empty-state" v-else>
-      <p>尚未新增任何工項，請在上方表單輸入工項資料</p>
+      <p>尚未新增任何作業，請在上方表單輸入作業資料</p>
     </div>
 
     <div class="action-buttons" v-if="tasks.length > 0">
       <button class="btn btn-secondary" @click="mergeDuplicateTasks" v-if="hasDuplicateTasks">
-        合併重複工項
+        合併重複作業
       </button>
       <button class="btn btn-secondary" @click="clearAll">
-        清空所有工項
+        清空所有作業
       </button>
       <button class="btn btn-success" @click="calculateSchedule">
         計算排程
@@ -368,7 +368,7 @@ function addTask() {
     
     if (existingTask) {
       // 提示用户是否要合并到现有任务
-      if (confirm(`工項「${trimmedName}」已存在，是否要合併依賴關係到現有工項？`)) {
+      if (confirm(`作業「${trimmedName}」已存在，是否要合併依賴關係到現有作業？`)) {
         // 合并依赖关系
         const mergedPredecessors = mergeDependencies(
           existingTask.predecessors,
@@ -411,7 +411,7 @@ function addTask() {
     
     if (existingTask) {
       // 提示用户是否要合并到现有任务
-      if (confirm(`工項「${trimmedName}」已存在，是否要合併依賴關係到現有工項？`)) {
+      if (confirm(`作業「${trimmedName}」已存在，是否要合併依賴關係到現有作業？`)) {
         // 合并依赖关系
         const mergedPredecessors = mergeDependencies(
           existingTask.predecessors,
@@ -507,7 +507,7 @@ function removeTask(taskId: string) {
 }
 
 function clearAll() {
-  if (confirm('確定要清空所有工項嗎？')) {
+  if (confirm('確定要清空所有作業嗎？')) {
     emit('clearTasks')
   }
 }
@@ -536,11 +536,11 @@ function mergeDuplicateTasks() {
     .map(([name, tasks]) => `「${name}」(${tasks.length}個)`)
     .join('、')
   
-  if (!confirm(`發現重複工項：${message}\n\n是否要合併這些重複工項？\n合併後將保留第一個工項並整合所有依賴關係。`)) {
+  if (!confirm(`發現重複作業：${message}\n\n是否要合併這些重複作業？\n合併後將保留第一個作業並整合所有依賴關係。`)) {
     return
   }
   
-  // 建立 ID 映射表：被刪除的工項 ID -> 保留的主工項 ID
+  // 建立 ID 映射表：被刪除的作業 ID -> 保留的主作業 ID
   const idMapping = new Map<string, string>()
   const tasksToRemove: string[] = []
   const primaryTaskMap = new Map<string, CPMTask>()
@@ -562,7 +562,7 @@ function mergeDuplicateTasks() {
     }
   }
   
-  // 第二階段：合併重複工項並更新依賴
+  // 第二階段：合併重複作業並更新依賴
   const updatedTasks: CPMTask[] = []
   
   for (const [name, duplicateTasks] of duplicateGroups) {
@@ -570,16 +570,16 @@ function mergeDuplicateTasks() {
     
     const primaryTask = duplicateTasks[0]!
     
-    // 收集所有重複工項的前置和後續作業
+    // 收集所有重複作業的前置和後續作業
     let mergedPredecessors: Dependency[] = []
     let mergedSuccessors: Dependency[] = []
     let maxDuration = 0
     
-    // 合併所有重複工項（包括主工項）的依賴關係
+    // 合併所有重複作業（包括主作業）的依賴關係
     for (const task of duplicateTasks) {
       if (!task) continue
       
-      // 更新依賴中的 taskId（如果指向其他重複工項）
+      // 更新依賴中的 taskId（如果指向其他重複作業）
       const updatedPreds = task.predecessors.map(dep => {
         if (idMapping.has(dep.taskId)) {
           return { ...dep, taskId: idMapping.get(dep.taskId)! }
@@ -611,9 +611,9 @@ function mergeDuplicateTasks() {
     updatedTasks.push(updatedTask)
   }
   
-  // 第三階段：更新所有其他工項中指向被刪除工項的依賴關係
+  // 第三階段：更新所有其他作業中指向被刪除作業的依賴關係
   for (const task of props.tasks) {
-    // 跳過即將被刪除的工項
+    // 跳過即將被刪除的作業
     if (tasksToRemove.includes(task.id)) continue
     
     // 檢查是否已經在更新列表中
@@ -867,6 +867,10 @@ function getTaskNames(dependencies: Dependency[]): string[] {
   padding-bottom: 12px;
   border-bottom: 1px solid #e0e0e0;
   letter-spacing: 0.5px;
+}
+
+.task-list h3 .count {
+  font-weight: 300;
 }
 
 .table-container {
