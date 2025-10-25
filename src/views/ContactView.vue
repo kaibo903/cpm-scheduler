@@ -19,38 +19,40 @@
       <!-- 📇 右側：聯絡資訊區域 -->
       <div class="info-section">
         <!-- 標題 -->
-        <h1 class="contact-title">Contact 聯絡資訊</h1>
+        <h1 class="contact-title">{{ t.contact.title }}</h1>
         
         <!-- 副標題說明 -->
         <p class="contact-intro">
-          感謝您瀏覽本網站。<br>
-          若您對本系統有任何疑問、建議或技術問題，<br>
-          歡迎透過以下方式與我們聯繫，我們將盡快回覆。
+          {{ t.contact.intro }}
         </p>
 
         <!-- 聯絡資訊列表 -->
         <div class="contact-details">
           <!-- 聯絡方式 -->
           <div class="detail-block">
-            <h3 class="detail-title">聯絡方式</h3>
+            <h3 class="detail-title">{{ t.contact.contactMethodTitle }}</h3>
             <div class="detail-content">
               <p class="detail-item">
-                <span class="detail-label">單位：</span>
+                <span class="detail-label">{{ t.contact.unit }}</span>
                 國立雲林科技大學 營建工程系 EB502
               </p>
               <p class="detail-item">
-                <span class="detail-label">地址：</span>
-                64002 雲林縣斗六市大學路三段123號 工程五館五樓
+                <span class="detail-label">{{ t.contact.address }}</span>
+                64002 雲林縣斗六市大學路三段123號 工程五館
               </p>
               <p class="detail-item">
-                <span class="detail-label">電子郵件：</span>
+                <span class="detail-label">{{ t.contact.email }}</span>
                 <a href="mailto:M11416012@yuntech.edu.tw" class="email-link">
                   M11416012@yuntech.edu.tw
                 </a>
               </p>
               <p class="detail-item">
-                <span class="detail-label">電話：</span>
-                暫不提供
+                <span class="detail-label">{{ t.contact.phone }}</span>
+                {{ t.contact.phoneValue }}
+              </p>
+              <p class="detail-item">
+                <span class="detail-label">{{ t.contact.advisor }}</span>
+                {{ t.contact.advisorName }}
               </p>
             </div>
           </div>
@@ -59,7 +61,7 @@
           <div class="detail-block">
             <div class="detail-content">
               <p class="version-text">
-                版本：v1.2 | 最後更新：2025年10月
+                {{ t.contact.version }}
               </p>
             </div>
           </div>
@@ -77,9 +79,13 @@
  * - 左右分欄佈局：左側顯示地圖，右側顯示聯絡資訊
  * - 嵌入 Google Maps 顯示工程五館位置
  * - 提供完整的聯絡方式與系統資訊
+ * - 支援多語言顯示
  */
 
-// 此組件為純展示型組件，不需要額外的邏輯
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 </script>
 
 <style scoped>

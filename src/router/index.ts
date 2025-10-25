@@ -13,7 +13,8 @@ import { createRouter, createWebHistory } from 'vue-router'
  * 🔗 路由配置
  * 
  * 路徑說明：
- * - / 或 /tools → 工具頁面（預設）
+ * - / → 首頁
+ * - /tools → 工具頁面
  * - /tools/planning → 進度規劃計算頁面
  * - /contact → 聯絡資訊頁面
  */
@@ -22,7 +23,11 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/tools'  // 預設導向工具頁面
+      name: 'home',
+      component: () => import('../views/HomeView.vue'),
+      meta: {
+        title: '首頁'
+      }
     },
     {
       path: '/tools',

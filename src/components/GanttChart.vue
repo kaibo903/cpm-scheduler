@@ -3,16 +3,16 @@
     <div class="gantt-header">
       <h2></h2>
       <div class="controls">
-        <button class="btn btn-small" @click="resetView">重置畫面</button>
+        <button class="btn btn-small" @click="resetView">{{ t.planning.resetView }}</button>
         <select class="mode-select" v-model="criticalPathMode" @change="renderGantt">
-          <option :value="false">作業順序</option>
-          <option :value="true">要徑優先</option>
+          <option :value="false">{{ t.planning.standardMode }}</option>
+          <option :value="true">{{ t.planning.criticalMode }}</option>
         </select>
       </div>
     </div>
     
     <div v-if="!cpmResult || cpmResult.tasks.length === 0" class="empty-state">
-      <p>尚無資料可顯示，請先新增作業並計算排程</p>
+      <p>{{ t.planning.emptyChart }}</p>
     </div>
 
     <div v-else class="gantt-container">
@@ -50,6 +50,10 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { CPMResult, CPMTask } from '../types'
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 
 const props = defineProps<{
   cpmResult: CPMResult | null
@@ -406,7 +410,7 @@ function renderGantt() {
     .style('font-weight', '600')
     .style('fill', 'white')
     .style('pointer-events', 'none')
-    .text(d => `${d.duration}天`)
+    .text(d => `${d.duration}${t.value.planning.days}`)
 
   // 添加圖例
   const legend = g.append('g')
@@ -429,7 +433,7 @@ function renderGantt() {
     .style('font-size', '13px')
     .style('fill', '#666')
     .style('font-weight', '400')
-    .text('要徑作業')
+    .text(t.value.planning.criticalTasks)
 
   // 一般作業圖例
   legend.append('rect')
@@ -447,7 +451,7 @@ function renderGantt() {
     .style('font-size', '13px')
     .style('fill', '#666')
     .style('font-weight', '400')
-    .text('非要徑作業')
+    .text(t.value.planning.normalTasks)
 
   // 自動調整視圖以顯示所有內容
   setTimeout(() => fitToView(), 100)

@@ -1,49 +1,49 @@
 <template>
   <div class="task-input">
     <div class="task-input-header">
-      <h2>作業輸入</h2>
-      <p class="subtitle">輸入作業名稱、工期和依賴關係</p>
+      <h2>{{ t.planning.taskName }}</h2>
+      <p class="subtitle">{{ t.planning.taskName }}</p>
     </div>
 
     <div class="input-form">
       <div class="form-container">
         <div class="basic-info-row">
           <div class="form-group form-group-name">
-            <label for="task-name">作業名稱</label>
+            <label for="task-name">{{ t.planning.taskName }}</label>
             <input
               id="task-name"
               v-model="newTask.name"
               type="text"
-              placeholder="請輸入作業名稱"
+              :placeholder="t.planning.taskName"
               @keyup.enter="addTask"
             />
           </div>
 
           <div class="form-group form-group-duration">
-            <label for="task-duration">工期（天）</label>
+            <label for="task-duration">{{ t.planning.duration }}</label>
             <input
               id="task-duration"
               v-model.number="newTask.duration"
               type="number"
               min="1"
-              placeholder="請輸入工期"
+              :placeholder="t.planning.duration"
               @keyup.enter="addTask"
             />
           </div>
 
           <div class="form-group button-group">
             <button class="btn btn-primary" @click="addTask" :disabled="!isFormValid">
-              {{ editingTaskId ? '更新作業' : '新增作業' }}
+              {{ editingTaskId ? t.planning.edit : t.planning.addTask }}
             </button>
             <button v-if="editingTaskId" class="btn btn-secondary" @click="cancelEdit">
-              取消
+              {{ t.importDialog.cancel }}
             </button>
           </div>
         </div>
 
         <div class="dependencies-row">
           <div class="form-group form-group-multi">
-            <label>前置作業</label>
+            <label>{{ t.planning.predecessors }}</label>
             <div class="multi-select-container">
               <div class="selected-items">
                 <span 
@@ -99,7 +99,7 @@
           </div>
 
           <div class="form-group form-group-multi">
-            <label>後續作業</label>
+            <label>{{ t.planning.successors }}</label>
             <div class="multi-select-container">
               <div class="selected-items">
                 <span 
@@ -158,16 +158,16 @@
     </div>
 
     <div class="task-list" v-if="tasks.length > 0">
-      <h3>已新增作業 <span class="count">({{ tasks.length }})</span></h3>
+      <h3>{{ t.planning.addedTasks }} <span class="count">({{ tasks.length }})</span></h3>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>作業名稱</th>
-              <th>工期(天)</th>
-              <th>前置作業</th>
-              <th>後續作業</th>
-              <th>操作</th>
+              <th>{{ t.planning.taskName }}</th>
+              <th>{{ t.planning.duration }}</th>
+              <th>{{ t.planning.predecessors }}</th>
+              <th>{{ t.planning.successors }}</th>
+              <th>{{ t.planning.actions }}</th>
             </tr>
           </thead>
           <tbody>
@@ -192,10 +192,10 @@
               </td>
               <td class="task-actions">
                 <button class="btn btn-small btn-secondary" @click="editTask(task.id)">
-                  編輯
+                  {{ t.planning.edit }}
                 </button>
                 <button class="btn btn-small btn-danger" @click="removeTask(task.id)">
-                  刪除
+                  {{ t.planning.delete }}
                 </button>
               </td>
             </tr>
@@ -205,18 +205,18 @@
     </div>
 
     <div class="empty-state" v-else>
-      <p>尚未新增任何作業，請在上方表單輸入作業資料</p>
+      <p>{{ t.planning.noTasks }}</p>
     </div>
 
     <div class="action-buttons" v-if="tasks.length > 0">
       <button class="btn btn-secondary" @click="mergeDuplicateTasks" v-if="hasDuplicateTasks">
-        合併重複作業
+        {{ t.planning.clearAll }}
       </button>
       <button class="btn btn-secondary" @click="clearAll">
-        清空所有作業
+        {{ t.planning.clearAll }}
       </button>
       <button class="btn btn-success" @click="calculateSchedule">
-        計算排程
+        {{ t.planning.calculate }}
       </button>
     </div>
   </div>
@@ -225,6 +225,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { CPMTask, Dependency, DependencyType } from '../types'
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 
 const props = defineProps<{
   tasks: CPMTask[]

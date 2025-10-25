@@ -3,21 +3,21 @@
     <div class="pdm-header">
       <h2></h2>
       <div class="controls">
-        <button class="btn btn-small" @click="resetView">重置視圖</button>
-        <button class="btn btn-small" @click="fitToView">自動縮放</button>
+        <button class="btn btn-small" @click="resetView">{{ t.planning.resetDiagram }}</button>
+        <button class="btn btn-small" @click="fitToView">{{ t.planning.autoFit }}</button>
         <label class="toggle-label">
           <input type="radio" v-model="displayMode" value="simple" @change="renderDiagram">
-          <span>簡潔模式</span>
+          <span>{{ t.planning.simpleMode }}</span>
         </label>
         <label class="toggle-label">
           <input type="radio" v-model="displayMode" value="detailed" @change="renderDiagram">
-          <span>詳細模式</span>
+          <span>{{ t.planning.detailedMode }}</span>
         </label>
       </div>
     </div>
     
     <div v-if="!cpmResult || cpmResult.tasks.length === 0" class="empty-state">
-      <p>尚無資料可顯示，請先新增作業並計算排程</p>
+      <p>{{ t.planning.emptyChart }}</p>
     </div>
 
     <div v-else class="pdm-container">
@@ -85,6 +85,10 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { CPMResult, CPMTask } from '../types'
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 
 const props = defineProps<{
   cpmResult: CPMResult | null

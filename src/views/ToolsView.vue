@@ -2,7 +2,8 @@
   <div class="container">
     <!-- 📦 工具頁面標題區域 -->
     <div class="tools-header-bar">
-      <h2 class="tools-title">工程管理工具</h2>
+      <h2 class="tools-title">{{ t.tools.title }}</h2>
+      <p class="tools-subtitle">{{ t.tools.subtitle }}</p>
     </div>
 
     <!-- 🛠️ 工具卡片網格 -->
@@ -16,79 +17,94 @@
           </div>
           
           <!-- 工具名稱 -->
-          <h3 class="tool-name">進度規劃</h3>
+          <h3 class="tool-name">{{ t.tools.planning }}</h3>
           
           <!-- 工具描述 -->
           <p class="tool-description">
-            使用要徑法 (Critical Path Method) 進行專案時程分析，
-            計算最早/最晚時間、識別要徑作業，並提供甘特圖與 PDM 網圖視覺化
+            {{ t.tools.planningDesc }}
           </p>
           
           <!-- 瞭解更多連結 -->
           <div class="tool-action">
             <span class="action-link">
               <span class="link-icon">○</span>
-              瞭解更多
+              {{ t.tools.learnMore }}
             </span>
           </div>
         </div>
       </router-link>
 
-      <!-- 進度控制工具卡片（敬請期待） -->
+      <!-- 工程臨時點工統計分析工具卡片（敬請期待） -->
       <div class="tool-card-link disabled">
         <div class="tool-card">
           <div class="tool-icon-badge">
-            <div class="icon-control-badge"></div>
+            <div class="icon-labor-badge"></div>
           </div>
-          <h3 class="tool-name">進度控制</h3>
+          <h3 class="tool-name">{{ t.tools.labor }}</h3>
           <p class="tool-description">
-            提供實獲值分析 (Earned Value Management)、S曲線繪製、
-            進度落後分析等功能，協助專案進度管控
+            {{ t.tools.laborDesc }}
           </p>
           <div class="tool-action">
             <span class="action-link disabled">
               <span class="link-icon">○</span>
-              敬請期待
+              {{ t.tools.comingSoon }}
             </span>
           </div>
         </div>
       </div>
 
-      <!-- 資源分配工具卡片（敬請期待） -->
+      <!-- 工程品質查驗工具卡片（敬請期待） -->
       <div class="tool-card-link disabled">
         <div class="tool-card">
           <div class="tool-icon-badge">
-            <div class="icon-resource-badge"></div>
+            <div class="icon-quality-badge"></div>
           </div>
-          <h3 class="tool-name">資源分配</h3>
+          <h3 class="tool-name">{{ t.tools.quality }}</h3>
           <p class="tool-description">
-            進行資源平衡 (Resource Leveling)、資源限制排程、
-            資源使用率分析，優化專案資源配置
+            {{ t.tools.qualityDesc }}
           </p>
           <div class="tool-action">
             <span class="action-link disabled">
               <span class="link-icon">○</span>
-              敬請期待
+              {{ t.tools.comingSoon }}
             </span>
           </div>
         </div>
       </div>
 
-      <!-- 成本估算工具卡片（敬請期待） -->
+      <!-- 智慧工程日報管理工具卡片（敬請期待） -->
       <div class="tool-card-link disabled">
         <div class="tool-card">
           <div class="tool-icon-badge">
-            <div class="icon-cost-badge"></div>
+            <div class="icon-report-badge"></div>
           </div>
-          <h3 class="tool-name">成本估算</h3>
+          <h3 class="tool-name">{{ t.tools.report }}</h3>
           <p class="tool-description">
-            提供工程數量計算、單價分析、成本預測、
-            現金流量分析等功能，協助專案預算編制
+            {{ t.tools.reportDesc }}
           </p>
           <div class="tool-action">
             <span class="action-link disabled">
               <span class="link-icon">○</span>
-              敬請期待
+              {{ t.tools.comingSoon }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 自動生成住宅平面圖系統工具卡片（敬請期待） -->
+      <div class="tool-card-link disabled">
+        <div class="tool-card">
+          <div class="tool-icon-badge">
+            <div class="icon-floorplan-badge"></div>
+          </div>
+          <h3 class="tool-name">{{ t.tools.floorplan }}</h3>
+          <p class="tool-description">
+            {{ t.tools.floorplanDesc }}
+          </p>
+          <div class="tool-action">
+            <span class="action-link disabled">
+              <span class="link-icon">○</span>
+              {{ t.tools.comingSoon }}
             </span>
           </div>
         </div>
@@ -106,9 +122,13 @@
  * - 採用卡片式佈局，類似產品展示頁面
  * - 點擊可用工具卡片進入對應的工具頁面
  * - 未來工具顯示為「敬請期待」狀態
+ * - 支援多語言顯示
  */
 
-// 此組件為純展示型組件，不需要額外的邏輯
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 </script>
 
 <style scoped>
@@ -131,6 +151,13 @@
   margin: 0;
   font-weight: 400;
   letter-spacing: 0.5px;
+}
+
+.tools-subtitle {
+  font-size: 14px;
+  color: #999;
+  margin: 8px 0 0 0;
+  font-weight: 400;
 }
 
 /* 🎨 工具卡片網格 */
@@ -210,66 +237,92 @@
   letter-spacing: 0.5px;
 }
 
-/* 📈 進度控制圖示（橙色） */
-.icon-control-badge {
+/* 👷 臨時點工統計分析圖示（橘黃色） */
+.icon-labor-badge {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
   border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 2px 6px rgba(245, 87, 108, 0.3);
+  box-shadow: 0 2px 6px rgba(247, 151, 30, 0.3);
 }
 
-.icon-control-badge::before {
-  content: 'EVM';
+.icon-labor-badge::before {
+  content: 'LABOR';
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ✓ 工程品質查驗圖示（綠色） */
+.icon-quality-badge {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(17, 153, 142, 0.3);
+}
+
+.icon-quality-badge::before {
+  content: 'QA';
   color: white;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* 👥 資源分配圖示（藍綠色） */
-.icon-resource-badge {
+/* 📱 智慧工程日報管理圖示（科技藍） */
+.icon-report-badge {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
   border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 2px 6px rgba(79, 172, 254, 0.3);
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
 }
 
-.icon-resource-badge::before {
-  content: 'RSC';
+.icon-report-badge::before {
+  content: 'LOG';
   color: white;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* 💰 成本估算圖示（金色） */
-.icon-cost-badge {
+/* 🏠 自動生成住宅平面圖系統圖示（紫紅色） */
+.icon-floorplan-badge {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
   border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 2px 6px rgba(252, 182, 159, 0.3);
+  box-shadow: 0 2px 6px rgba(142, 45, 226, 0.3);
 }
 
-.icon-cost-badge::before {
-  content: '$$$';
-  color: #8b5a3c;
-  font-size: 15px;
+.icon-floorplan-badge::before {
+  content: 'PLAN';
+  color: white;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* 📝 工具名稱 */

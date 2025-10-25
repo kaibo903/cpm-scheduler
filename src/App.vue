@@ -3,25 +3,40 @@
     <header class="app-header">
       <div class="container">
         <div class="header-content">
-          <div class="header-text">
-            <h1>工程進度規劃與控制課程解答工具</h1>
-            <p class="subtitle">Construction Planning and Scheduling Learning Assistant</p>
-          </div>
+          <router-link to="/" class="header-text-link">
+            <div class="header-text">
+              <h1>工程進度規劃與控制課程解答工具</h1>
+              <p class="subtitle">Construction Planning and Scheduling Learning Assistant</p>
+            </div>
+          </router-link>
           
           <!-- 🔗 頂部導航列 -->
           <nav class="main-nav">
             <router-link 
+              to="/"
+              class="nav-item" 
+              active-class="active"
+              exact>
+              {{ t.nav.home }}
+            </router-link>
+            <router-link 
               to="/tools"
               class="nav-item" 
               active-class="active">
-              工具
+              {{ t.nav.tools }}
             </router-link>
             <router-link 
               to="/contact"
               class="nav-item" 
               active-class="active">
-              聯絡資訊
+              {{ t.nav.contact }}
             </router-link>
+            
+            <!-- 🌐 語言切換器 -->
+            <button class="lang-switcher" @click="toggleLanguage" :title="isEnglish ? '切換至繁體中文' : 'Switch to English'">
+              <span class="lang-icon">🌐</span>
+              <span class="lang-text">{{ isEnglish ? '中文' : 'EN' }}</span>
+            </button>
           </nav>
         </div>
       </div>
@@ -34,8 +49,8 @@
 
     <footer class="app-footer">
       <div class="container">
-        <p>© 2025 Construction Planning and Scheduling Learning Assistant v1.2 </p>
-        <p>Designed by：國立雲林科技大學 營建工程系 EB502 </p>
+        <p>{{ t.footer.copyright }}</p>
+        <p>{{ t.footer.designedBy }}</p>
       </div>
     </footer>
   </div>
@@ -48,11 +63,20 @@
  * 功能說明：
  * - 提供全域佈局（標題、導航列、頁腳）
  * - 使用 Vue Router 進行頁面路由管理
+ * - 提供多語言切換功能（繁體中文 / 英文）
  * - 各頁面功能由對應的 View 組件負責
  */
 
-// 此組件為佈局組件，不需要額外的邏輯
-// 所有頁面由 router-view 渲染
+import { onMounted } from 'vue'
+import { useLanguage } from './composables/useLanguage'
+
+// 🌐 語言管理
+const { t, toggleLanguage, isEnglish, initLanguage } = useLanguage()
+
+// 🚀 初始化：載入儲存的語言設定
+onMounted(() => {
+  initLanguage()
+})
 </script>
 
 <style>
@@ -86,6 +110,27 @@
   justify-content: space-between; /* 📏 標題與導航分居兩側 */
   align-items: center;            /* 📏 垂直置中對齊 */
   gap: 40px;                      /* 📏 標題與導航間距：40px */
+}
+
+/* 🔗 標題連結包裝 */
+.header-text-link {
+  flex: 1;                        /* 📏 佔據可用空間 */
+  text-decoration: none;          /* 🎨 移除底線 */
+  color: #333;                    /* 🎨 文字顏色：黑色 */
+  cursor: pointer;                /* 🖱️ 滑鼠游標變為手指 */
+  transition: opacity 0.2s ease;  /* 🎨 過渡效果 */
+}
+
+/* 🖱️ 標題連結所有狀態保持黑色 */
+.header-text-link:visited,
+.header-text-link:link,
+.header-text-link:active {
+  color: #333;                    /* 🎨 所有狀態都保持黑色 */
+}
+
+/* 🖱️ 標題連結 Hover 效果 */
+.header-text-link:hover {
+  opacity: 0.7;                   /* 🎨 滑鼠移上時：半透明效果 */
 }
 
 /* 📝 標題文字區 */
@@ -147,6 +192,47 @@
   color: #333;                    /* 🎨 文字顏色：深灰色 */
   font-weight: 500;               /* 📏 字重：中等粗體 */
   border-bottom-color: #333;      /* 🎨 底線顏色：深灰色 */
+}
+
+/* ==========================================
+   🌐 語言切換器
+   ========================================== */
+
+/* 📝 語言切換按鈕 */
+.lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;                       /* 📏 圖標與文字間距 */
+  padding: 8px 16px;              /* 📏 內距：上下8px 左右16px */
+  margin-left: 16px;              /* 📏 與導航項目間距 */
+  background: #f5f5f5;            /* 🎨 背景：淺灰色 */
+  border: 1px solid #e8e8e8;      /* 🎨 邊框：淺灰色 */
+  border-radius: 4px;             /* 📏 圓角：4px */
+  color: #666;                    /* 🎨 文字顏色：深灰 */
+  font-size: 14px;                /* 📏 文字大小 */
+  font-weight: 500;               /* 📏 字重：中等 */
+  cursor: pointer;                /* 🖱️ 滑鼠游標：手指 */
+  transition: all 0.2s ease;      /* ⚡ 過渡動畫 */
+  white-space: nowrap;            /* 📏 不換行 */
+}
+
+/* 🖱️ 語言切換按鈕 Hover 效果 */
+.lang-switcher:hover {
+  background: #e8e8e8;            /* 🎨 Hover 背景：較深灰色 */
+  border-color: #d0d0d0;          /* 🎨 Hover 邊框：較深灰色 */
+  color: #333;                    /* 🎨 Hover 文字：深灰色 */
+}
+
+/* 🌐 語言圖標 */
+.lang-icon {
+  font-size: 16px;                /* 📏 圖標大小 */
+  line-height: 1;
+}
+
+/* 📝 語言文字 */
+.lang-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.5px;          /* 📏 字距 */
 }
 
 /* 📦 主內容區域 */

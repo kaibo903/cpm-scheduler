@@ -3,31 +3,31 @@
     <!-- 🔙 頂部導航列：返回按鈕 + 頁面標題 -->
     <div class="top-navigation">
       <router-link to="/tools" class="back-button">
-        ← 返回工具列表
+        {{ t.planning.backButton }}
       </router-link>
-      <h2 class="page-title">進度規劃</h2>
+      <h2 class="page-title">{{ t.planning.title }}</h2>
     </div>
 
     <!-- 🛠️ 工具列 -->
     <div class="toolbar">
       <div class="toolbar-section">
         <button class="btn btn-outline" @click="showImportDialog = true">
-          匯入 CSV
+          {{ t.planning.importCSV }}
         </button>
         <button class="btn btn-outline" @click="downloadTemplate">
-          下載 CSV範本
+          {{ t.planning.downloadTemplate }}
         </button>
       </div>
       
       <div class="toolbar-section" v-if="tasks.length > 0">
         <button class="btn btn-outline" @click="exportTasks">
-          匯出作業
+          {{ t.planning.exportTasks }}
         </button>
         <button class="btn btn-outline" @click="exportResults" :disabled="!cpmResult">
-          匯出結果
+          {{ t.planning.exportResults }}
         </button>
         <button class="btn btn-outline" @click="exportReport" :disabled="!cpmResult">
-          匯出報告
+          {{ t.planning.exportReport }}
         </button>
       </div>
     </div>
@@ -91,13 +91,12 @@
   <div v-if="showImportDialog" class="modal-overlay" @click="showImportDialog = false">
     <div class="modal" @click.stop>
       <div class="modal-header">
-        <h3>匯入 CSV 檔案</h3>
+        <h3>{{ t.importDialog.title }}</h3>
         <button class="close-btn" @click="showImportDialog = false">×</button>
       </div>
       <div class="modal-body">
         <p class="modal-description">
-          選擇包含作業資料的 CSV 檔案。檔案應包含以下欄位：
-          <br>作業名稱、工期(天)、前置作業、後續作業
+          {{ t.importDialog.description }}
         </p>
         <input 
           type="file" 
@@ -108,7 +107,7 @@
         />
         <div class="modal-actions">
           <button class="btn btn-secondary" @click="showImportDialog = false">
-            取消
+            {{ t.importDialog.cancel }}
           </button>
         </div>
       </div>
@@ -140,6 +139,10 @@ import {
   importTasksFromCSV,
   downloadCSVTemplate
 } from '../utils/dataIO'
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 
 // 🔄 響應式狀態
 const tasks = ref<CPMTask[]>([])
@@ -154,7 +157,7 @@ const activeTab = ref<'gantt' | 'pdm'>('gantt')
 function handleAddTask(task: CPMTask) {
   tasks.value.push(task)
   buildTaskDependencies(tasks.value)
-  showMessage('作業已新增', 'success')
+  showMessage(t.value.messages.taskAdded, 'success')
 }
 
 function handleUpdateTask(updatedTask: CPMTask) {
@@ -162,34 +165,34 @@ function handleUpdateTask(updatedTask: CPMTask) {
   if (index !== -1) {
     tasks.value[index] = updatedTask
     buildTaskDependencies(tasks.value)
-    showMessage('作業已更新', 'success')
+    showMessage(t.value.messages.taskUpdated, 'success')
   }
 }
 
 function handleRemoveTask(taskId: string) {
   tasks.value = tasks.value.filter(t => t.id !== taskId)
   buildTaskDependencies(tasks.value)
-  showMessage('作業已刪除', 'success')
+  showMessage(t.value.messages.taskDeleted, 'success')
 }
 
 function handleClearTasks() {
   tasks.value = []
   cpmResult.value = null
-  showMessage('已清空所有作業', 'info')
+  showMessage(t.value.messages.tasksCleared, 'info')
 }
 
 // 🧮 CPM 計算函式
 function handleCalculate() {
   if (tasks.value.length === 0) {
-    showMessage('請先新增作業', 'error')
+    showMessage(t.value.messages.error, 'error')
     return
   }
   
   try {
     cpmResult.value = calculateCPM(tasks.value)
-    showMessage('計算完成', 'success')
+    showMessage(t.value.messages.calculationComplete, 'success')
   } catch (error) {
-    showMessage('計算失敗：' + (error as Error).message, 'error')
+    showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
 }
 
@@ -197,9 +200,9 @@ function handleCalculate() {
 function exportTasks() {
   try {
     exportTasksToCSV(tasks.value)
-    showMessage('作業資料已匯出', 'success')
+    showMessage(t.value.messages.exportSuccess, 'success')
   } catch (error) {
-    showMessage('匯出失敗：' + (error as Error).message, 'error')
+    showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
 }
 
@@ -208,9 +211,9 @@ function exportResults() {
   
   try {
     exportCPMResultToCSV(cpmResult.value)
-    showMessage('CPM 結果已匯出', 'success')
+    showMessage(t.value.messages.exportSuccess, 'success')
   } catch (error) {
-    showMessage('匯出失敗：' + (error as Error).message, 'error')
+    showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
 }
 
@@ -219,9 +222,9 @@ function exportReport() {
   
   try {
     exportCriticalPathReport(cpmResult.value)
-    showMessage('要徑報告已匯出', 'success')
+    showMessage(t.value.messages.exportSuccess, 'success')
   } catch (error) {
-    showMessage('匯出失敗：' + (error as Error).message, 'error')
+    showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
 }
 
@@ -229,9 +232,9 @@ function exportReport() {
 function downloadTemplate() {
   try {
     downloadCSVTemplate()
-    showMessage('範本已下載', 'success')
+    showMessage(t.value.messages.exportSuccess, 'success')
   } catch (error) {
-    showMessage('下載失敗：' + (error as Error).message, 'error')
+    showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
 }
 
@@ -246,13 +249,13 @@ async function handleFileImport(event: Event) {
     tasks.value = importedTasks
     buildTaskDependencies(tasks.value)
     showImportDialog.value = false
-    showMessage(`成功匯入 ${importedTasks.length} 筆作業`, 'success')
+    showMessage(t.value.messages.importSuccess, 'success')
     
     if (fileInput.value) {
       fileInput.value.value = ''
     }
   } catch (error) {
-    showMessage('匯入失敗：' + (error as Error).message, 'error')
+    showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
 }
 

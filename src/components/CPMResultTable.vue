@@ -1,35 +1,35 @@
 <template>
   <div class="cpm-result">
     <div class="result-header">
-      <h2><span class="cpm-text">CPM</span> 計算結果</h2>
+      <h2><span class="cpm-text">CPM</span> {{ t.cpmResult.summary }}</h2>
       <div class="summary" v-if="cpmResult">
         <div class="summary-item">
-          <span class="label">專案總工期：</span>
+          <span class="label">{{ t.cpmResult.totalDuration }}：</span>
           <span class="value highlight">{{ cpmResult.totalDuration }} 天</span>
         </div>
         <div class="summary-item">
-          <span class="label">要徑作業數量：</span>
+          <span class="label">{{ t.cpmResult.criticalCount }}：</span>
           <span class="value">{{ cpmResult.criticalPath.length }} 項</span>
         </div>
       </div>
     </div>
 
     <div v-if="cpmResult?.errors && cpmResult.errors.length > 0" class="error-box">
-      <h3><span class="warning-icon"></span>錯誤訊息</h3>
+      <h3><span class="warning-icon"></span>{{ t.cpmResult.errorTitle }}</h3>
       <ul>
         <li v-for="(error, index) in cpmResult.errors" :key="index">{{ error }}</li>
       </ul>
     </div>
 
     <div v-if="cpmResult?.hasCycle" class="warning-box">
-      <h3><span class="warning-icon"></span>檢測到循環依賴</h3>
-      <p>作業之間存在循環依賴關係，無法進行 CPM 計算。請檢查並修正依賴關係。</p>
+      <h3><span class="warning-icon"></span>{{ t.cpmResult.cycleDetected }}</h3>
+      <p>{{ t.cpmResult.cycleDesc }}</p>
     </div>
 
     <div v-if="cpmResult && !cpmResult.hasCycle && (!cpmResult.errors || cpmResult.errors.length === 0)">
       <!-- 要徑顯示 -->
       <div class="critical-path-section">
-        <h3><span class="dot"></span>要徑</h3>
+        <h3><span class="dot"></span>{{ t.cpmResult.critical }}</h3>
         <div class="critical-path-flow">
           <div 
             v-for="(taskId, index) in cpmResult.criticalPath" 
@@ -44,20 +44,20 @@
 
       <!-- CPM 詳細結果表格 -->
       <div class="table-section">
-        <h3>詳細計算結果</h3>
+        <h3>{{ t.cpmResult.detailedResults }}</h3>
         <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>作業名稱</th>
-                <th class="right">工期(天)</th>
-                <th>ES</th>
-                <th>EF</th>
-                <th>LS</th>
-                <th>LF</th>
-                <th>TF</th>
-                <th>FF</th>
-                <th>要徑作業</th>
+                <th>{{ t.cpmResult.taskName }}</th>
+                <th class="right">{{ t.cpmResult.duration }}</th>
+                <th>{{ t.cpmResult.es }}</th>
+                <th>{{ t.cpmResult.ef }}</th>
+                <th>{{ t.cpmResult.ls }}</th>
+                <th>{{ t.cpmResult.lf }}</th>
+                <th>{{ t.cpmResult.tf }}</th>
+                <th>{{ t.cpmResult.ff }}</th>
+                <th>{{ t.cpmResult.critical }}</th>
               </tr>
             </thead>
             <tbody>
@@ -126,6 +126,10 @@
 
 <script setup lang="ts">
 import type { CPMResult } from '../types'
+import { useLanguage } from '../composables/useLanguage'
+
+// 🌐 語言管理
+const { t } = useLanguage()
 
 const props = defineProps<{
   cpmResult: CPMResult | null
