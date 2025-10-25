@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/cpm-scheduler/',  // 👈 加入這一行！
+  base: '/cpm-scheduler/',  // 👈 關鍵設定！告訴 Vite 網站部署在子路徑
   plugins: [
     vue(),
     vueDevTools(),
