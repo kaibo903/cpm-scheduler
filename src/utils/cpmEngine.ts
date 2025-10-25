@@ -266,6 +266,7 @@ function backwardPass(tasks: CPMTask[], sortedIds: string[]): void {
   // 反向遍歷
   for (let i = sortedIds.length - 1; i >= 0; i--) {
     const taskId = sortedIds[i]
+    if (!taskId) continue // 類型守衛
     const task = taskMap.get(taskId)
     if (!task) continue // 類型守衛
     
