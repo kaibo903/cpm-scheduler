@@ -1464,6 +1464,8 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 
 .table-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
 table {
@@ -1872,7 +1874,7 @@ td {
   }
 
   .task-input {
-    padding: 24px;
+    padding: 16px;
   }
 
   .form-container {
@@ -1880,15 +1882,154 @@ td {
   }
   
   .task-input-header h2 {
-    font-size: 16px;
+    font-size: 18px;
   }
   
   .form-group label {
-    font-size: 12px;
+    font-size: 13px;
   }
   
   .available-items {
     max-height: 100px;
+  }
+
+  /* 📱 表格響應式設計 */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  table {
+    min-width: 800px;
+    font-size: 11px;
+  }
+
+  th {
+    padding: 8px 6px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  .task-name {
+    max-width: 100px;
+    font-size: 11px;
+  }
+
+  .task-duration,
+  .task-date {
+    font-size: 11px;
+  }
+
+  .task-cost .cost-amount {
+    font-size: 11px;
+  }
+
+  /* 📱 資源表格響應式 */
+  .resources-header,
+  .resource-row {
+    grid-template-columns: 65px 1.5fr 50px 50px 70px 28px;
+    gap: 3px;
+    font-size: 11px;
+  }
+
+  .resource-row input {
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+
+  .resource-row .col-cost .cost-display {
+    font-size: 11px;
+    padding-right: 4px;
+  }
+
+  /* 📱 按鈕調整 */
+  .button-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .button-row .btn {
+    width: 100%;
+  }
+
+  /* 📱 依賴關係項目 */
+  .dep-item,
+  .resource-display-item {
+    font-size: 11px;
+  }
+
+  /* 📱 操作按鈕 */
+  .btn-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* 📱 表單輸入 */
+  .form-group input,
+  .form-group select {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  /* 📱 表單標籤 */
+  .section-label {
+    font-size: 12px;
+  }
+
+  /* 📱 任務列表標題 */
+  .task-list h3 {
+    font-size: 14px;
+    padding: 12px 0;
+  }
+}
+
+/* 📱 極小屏幕優化 (≤ 480px) */
+@media (max-width: 480px) {
+  .task-input {
+    padding: 12px;
+  }
+
+  .table-container {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+
+  table {
+    font-size: 10px;
+  }
+
+  th {
+    padding: 6px 4px;
+    font-size: 9px;
+  }
+
+  td {
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+
+  .resources-header,
+  .resource-row {
+    grid-template-columns: 60px 1fr 45px 45px 65px 24px;
+    gap: 2px;
+    font-size: 10px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 </style>
