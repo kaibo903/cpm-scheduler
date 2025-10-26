@@ -119,6 +119,8 @@ const zhTW: Translations = {
     email: '電子郵件：',
     phone: '電話：',
     phoneValue: '暫不提供',
+    advisor: '指導教授：',
+    advisorName: '暫不提供',
     version: '版本：v1.2 | 最後更新：2025年10月'
   },
 

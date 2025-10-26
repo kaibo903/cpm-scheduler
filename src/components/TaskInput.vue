@@ -282,8 +282,8 @@
             <tr>
               <th>{{ t.planning.taskName }}</th>
               <th>{{ t.planning.duration }}</th>
-              <th>開始時間</th>
-              <th>結束時間</th>
+              <th>{{ t.planning.startDate }}</th>
+              <th>{{ t.planning.endDate }}</th>
               <th>{{ t.planning.predecessors }}</th>
               <th>{{ t.planning.successors }}</th>
               <th>{{ t.planning.resources }}</th>

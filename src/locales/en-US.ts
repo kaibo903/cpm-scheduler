@@ -75,8 +75,8 @@ const enUS: Translations = {
     addedTasks: 'Added Tasks',
     taskName: 'Task Name',
     duration: 'Duration',
-    startDate: 'Start Date',
-    endDate: 'End Date',
+    startDate: 'Start Time',
+    endDate: 'End Time',
     resources: 'Resources',
     resourceName: 'Resource Name',
     resourceQuantity: 'Quantity',
@@ -119,6 +119,8 @@ const enUS: Translations = {
     email: 'Email:',
     phone: 'Phone:',
     phoneValue: 'Not Available',
+    advisor: 'Advisor:',
+    advisorName: 'Not Available',
     version: 'Version: v1.2 | Last Updated: October 2025'
   },
 
