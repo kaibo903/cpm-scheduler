@@ -159,11 +159,12 @@
 
         <!-- 🎯 資源與成本輸入區域 -->
         <div class="resources-section">
-          <label class="section-label">{{ t.planning.resources }}</label>
+          <label class="section-label">成本項目</label>
           
           <div class="resources-table">
             <div class="resources-header">
-              <div class="col-name">資源名稱</div>
+              <div class="col-type">類型</div>
+              <div class="col-name">名稱</div>
               <div class="col-quantity">數量</div>
               <div class="col-price">單價</div>
               <div class="col-cost">成本</div>
@@ -172,6 +173,12 @@
 
             <div class="resources-body">
               <div v-for="(resource, index) in newTask.resources" :key="resource.id" class="resource-row">
+                <div class="col-type">
+                  <select v-model="resource.type" class="type-select">
+                    <option value="resource">資源</option>
+                    <option value="other">其他</option>
+                  </select>
+                </div>
                 <div class="col-name">
                   <input
                     v-model="resource.name"
@@ -224,14 +231,14 @@
                 type="button"
                 class="btn-add-resource-row"
                 @click="addResourceRow"
-                title="新增資源"
+                title="新增項目"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="16"></line>
                   <line x1="8" y1="12" x2="16" y2="12"></line>
                 </svg>
-                <span>新增資源</span>
+                <span>新增項目</span>
               </button>
             </div>
           </div>
@@ -344,7 +351,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { CPMTask, Dependency, DependencyType, Resource } from '../types'
+import type { CPMTask, Dependency, DependencyType, Resource, ResourceType } from '../types'
 import { useLanguage } from '../composables/useLanguage'
 
 // 🌐 語言管理
@@ -432,7 +439,7 @@ function getDependencyLabel(dep: Dependency): string {
   return `${taskName} (${dep.type})`
 }
 
-// 🧮 計算任務總成本
+// 🧮 計算任務總成本（包含資源與其他成本）
 function calculateTaskTotalCost(task: CPMTask): number {
   if (!task.resources || task.resources.length === 0) {
     return 0
@@ -504,10 +511,11 @@ function updateSuccessorLag(taskId: string, newLag: number) {
 function addResourceRow() {
   const resource: Resource = {
     id: `resource-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    type: 'resource', // 預設為資源類型
     name: '',
-    quantity: 1,
-    unitPrice: 0,
-    totalCost: 0
+    quantity: undefined,
+    unitPrice: undefined,
+    totalCost: undefined
   }
   newTask.value.resources.push(resource)
 }
@@ -973,7 +981,7 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 
 .resources-header {
   display: grid;
-  grid-template-columns: 2fr 100px 100px 120px 40px;
+  grid-template-columns: 90px 3fr 80px 80px 110px 32px;
   gap: 8px;
   background: #f5f5f5;
   padding: 8px;
@@ -996,11 +1004,34 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 
 .resource-row {
   display: grid;
-  grid-template-columns: 2fr 100px 100px 120px 40px;
+  grid-template-columns: 90px 3fr 80px 80px 110px 32px;
   gap: 8px;
   padding: 8px;
   background: white;
   align-items: center;
+}
+
+.resource-row .col-type .type-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fafafa;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.resource-row .col-type .type-select:hover {
+  border-color: #999;
+  background: #fff;
+}
+
+.resource-row .col-type .type-select:focus {
+  outline: none;
+  border-color: #666;
+  background: #fff;
 }
 
 .resource-row .col-name input {
@@ -1049,7 +1080,7 @@ function getTaskNames(dependencies: Dependency[]): string[] {
   border-radius: 2px;
   font-size: 13px;
   font-weight: 500;
-  color: #f44336;
+  color: #e53935;
 }
 
 .resource-row .col-action {
@@ -1100,6 +1131,44 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 .btn-add-resource-row:active {
   background: #e0e0e0;
   color: #333;
+}
+
+/* 🎯 其他成本區域 */
+.other-cost-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.other-cost-section label {
+  color: #666;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+.other-cost-section input {
+  width: 200px;
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.other-cost-section input:hover {
+  border-color: #999;
+  background: #fff;
+}
+
+.other-cost-section input:focus {
+  outline: none;
+  border-color: #666;
+  background: #fff;
 }
 
 /* 按鈕行 */
@@ -1304,6 +1373,15 @@ th {
   letter-spacing: 0.5px;
 }
 
+/* 📊 表格欄位寬度設定 */
+th:nth-child(1) { width: 14%; }  /* 作業名稱 */
+th:nth-child(2) { width: 10%; text-align: center; }  /* 工期 */
+th:nth-child(3) { width: 18%; }  /* 項目明細 */
+th:nth-child(4) { width: 12%; text-align: right; }  /* 成本 */
+th:nth-child(5) { width: 20%; }  /* 前置作業 */
+th:nth-child(6) { width: 20%; }  /* 後續作業 */
+th:nth-child(7) { width: 6%; }   /* 操作 */
+
 tbody tr {
   border-bottom: 1px solid #f0f0f0;
   transition: background 0.2s;
@@ -1383,8 +1461,6 @@ td {
 }
 
 .task-cost {
-  color: #4caf50;
-  font-weight: 500;
   text-align: right;
   font-size: 13px;
 }
@@ -1397,19 +1473,21 @@ td {
 
 .cost-amount {
   font-weight: 500;
+  color: #e53935;
 }
 
 .task-actions {
   display: flex;
-  gap: 8px;
-  justify-content: center;
+  gap: 4px;
+  justify-content: flex-start;
   align-items: center;
+  padding: 4px !important;
 }
 
 /* 🎨 圖示按鈕 - 扁平化設計 */
 .btn-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: none;
   background: transparent;
@@ -1422,8 +1500,8 @@ td {
 }
 
 .btn-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   transition: all 0.2s;
 }
 
@@ -1628,7 +1706,7 @@ td {
 
   .resources-header,
   .resource-row {
-    grid-template-columns: 1fr 80px 80px 100px 36px;
+    grid-template-columns: 75px 2fr 55px 55px 80px 28px;
     gap: 4px;
     font-size: 12px;
   }

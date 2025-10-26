@@ -13,10 +13,16 @@ export interface Dependency {
 }
 
 /**
+ * 資源類型
+ */
+export type ResourceType = 'resource' | 'other'
+
+/**
  * 資源
  */
 export interface Resource {
   id: string                    // 資源唯一識別碼
+  type: ResourceType            // 資源類型（資源/其他）
   name: string                  // 資源名稱
   quantity?: number             // 資源數量（可選）
   unitPrice?: number            // 單價（可選）
@@ -33,7 +39,7 @@ export interface CPMTask {
   duration: number              // 工期（天數）
   predecessors: Dependency[]    // 前置作業（含關係類型）
   successors: Dependency[]      // 後續作業（含關係類型）
-  resources?: Resource[]        // 資源列表（可選）
+  resources?: Resource[]        // 資源列表（可選，含資源與其他成本）
   
   // CPM 計算結果
   es?: number                   // 最早開始時間 (Earliest Start)

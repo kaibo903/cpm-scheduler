@@ -69,6 +69,12 @@
             @click="activeTab = 'pdm'">
             PDM
           </button>
+          <button 
+            class="tab-button" 
+            :class="{ active: activeTab === 'resource' }"
+            @click="activeTab = 'resource'">
+            資源山積圖
+          </button>
         </div>
         
         <div class="chart-content">
@@ -77,6 +83,9 @@
           </div>
           <div v-show="activeTab === 'pdm'" class="chart-panel">
             <PDMDiagram :cpm-result="cpmResult" />
+          </div>
+          <div v-show="activeTab === 'resource'" class="chart-panel">
+            <ResourceHistogram :cpm-result="cpmResult" :tasks="tasks" />
           </div>
         </div>
       </div>
@@ -131,6 +140,7 @@ import TaskInput from '../components/TaskInput.vue'
 import CPMResultTable from '../components/CPMResultTable.vue'
 import GanttChart from '../components/GanttChart.vue'
 import PDMDiagram from '../components/PDMDiagram.vue'
+import ResourceHistogram from '../components/ResourceHistogram.vue'
 import type { CPMTask, CPMResult } from '../types'
 import { calculateCPM, buildTaskDependencies } from '../utils/cpmEngine'
 import {
@@ -152,7 +162,7 @@ const message = ref('')
 const messageType = ref<'success' | 'error' | 'info'>('info')
 const showImportDialog = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
-const activeTab = ref<'gantt' | 'pdm'>('gantt')
+const activeTab = ref<'gantt' | 'pdm' | 'resource'>('gantt')
 let isMerging = false  // 🔄 合併標記，避免顯示多個通知
 
 // 🔧 任務管理函式
