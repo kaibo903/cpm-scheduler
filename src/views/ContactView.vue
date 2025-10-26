@@ -1,68 +1,66 @@
 <template>
-  <div class="container">
-    <!-- 📋 聯絡資訊主要內容區：左右分欄 -->
-    <div class="contact-layout">
-      <!-- 🗺️ 左側：地圖區域 -->
-      <div class="map-section">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d826.5482817760078!2d120.53666423064311!3d23.69517838866941!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346ec81a4e090e19%3A0xfb5e61980b5c6e0!2z6Zuy5p6X56eR5oqA5aSn5a24LeW3peeoi-WtuOmZouS6lOmkqA!5e1!3m2!1szh-TW!2stw!4v1761405943888!5m2!1szh-TW!2stw"
-          width="100%"
-          height="100%"
-          style="border:0;"
-          allowfullscreen
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          title="國立雲林科技大學工程五館位置 - 雲林科技大學-工程學院五館">
-        </iframe>
-      </div>
+  <div class="contact-page">
+    <div class="container">
+      <!-- 📋 聯絡資訊主要內容區：左右分欄 -->
+      <div class="contact-layout">
+        <!-- 🗺️ 左側：地圖區域 -->
+        <div class="map-section">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d826.5482817760078!2d120.53666423064311!3d23.69517838866941!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346ec81a4e090e19%3A0xfb5e61980b5c6e0!2z6Zuy5p6X56eR5oqA5aSn5a24LeW3peeoi-WtuOmZouS6lOmkqA!5e1!3m2!1szh-TW!2stw!4v1761405943888!5m2!1szh-TW!2stw"
+            width="100%"
+            height="100%"
+            style="border:0;"
+            allowfullscreen
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="國立雲林科技大學工程五館位置 - 雲林科技大學-工程學院五館">
+          </iframe>
+        </div>
 
-      <!-- 📇 右側：聯絡資訊區域 -->
-      <div class="info-section">
-        <!-- 標題 -->
-        <h1 class="contact-title">{{ t.contact.title }}</h1>
-        
-        <!-- 副標題說明 -->
-        <p class="contact-intro">
-          {{ t.contact.intro }}
-        </p>
+        <!-- 📇 右側：聯絡資訊區域 -->
+        <div class="info-section">
+          <!-- 標題 -->
+          <h1 class="contact-title">{{ t.contact.title }}</h1>
+          
+          <!-- 副標題說明 -->
+          <p class="contact-intro">
+            {{ t.contact.intro }}
+          </p>
 
-        <!-- 聯絡資訊列表 -->
-        <div class="contact-details">
-          <!-- 聯絡方式 -->
-          <div class="detail-block">
-            <h3 class="detail-title">{{ t.contact.contactMethodTitle }}</h3>
-            <div class="detail-content">
-              <p class="detail-item">
-                <span class="detail-label">{{ t.contact.unit }}</span>
-                國立雲林科技大學 營建工程系 EB502
-              </p>
-              <p class="detail-item">
-                <span class="detail-label">{{ t.contact.address }}</span>
-                64002 雲林縣斗六市大學路三段123號 工程五館
-              </p>
-              <p class="detail-item">
-                <span class="detail-label">{{ t.contact.email }}</span>
-                <a href="mailto:M11416012@yuntech.edu.tw" class="email-link">
-                  M11416012@yuntech.edu.tw
-                </a>
-              </p>
-              <p class="detail-item">
-                <span class="detail-label">{{ t.contact.phone }}</span>
-                {{ t.contact.phoneValue }}
-              </p>
-              <p class="detail-item">
-                <span class="detail-label">{{ t.contact.advisor }}</span>
-                {{ t.contact.advisorName }}
-              </p>
+          <!-- 聯絡資訊列表 -->
+          <div class="contact-details">
+            <!-- 聯絡方式 -->
+            <div class="detail-block">
+              <h3 class="detail-title">{{ t.contact.contactMethodTitle }}</h3>
+              <div class="detail-content">
+                <p class="detail-item">
+                  <span class="detail-label">{{ t.contact.unit }}</span>
+                  國立雲林科技大學 營建工程系 EB502
+                </p>
+                <p class="detail-item">
+                  <span class="detail-label">{{ t.contact.address }}</span>
+                  64002 雲林縣斗六市大學路三段123號 工程五館
+                </p>
+                <p class="detail-item">
+                  <span class="detail-label">{{ t.contact.email }}</span>
+                  <a href="mailto:M11416012@yuntech.edu.tw" class="email-link">
+                    M11416012@yuntech.edu.tw
+                  </a>
+                </p>
+                <p class="detail-item">
+                  <span class="detail-label">{{ t.contact.phone }}</span>
+                  {{ t.contact.phoneValue }}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <!-- 系統版本資訊 -->
-          <div class="detail-block">
-            <div class="detail-content">
-              <p class="version-text">
-                {{ t.contact.version }}
-              </p>
+            <!-- 系統版本資訊 -->
+            <div class="detail-block">
+              <div class="detail-content">
+                <p class="version-text">
+                  {{ t.contact.version }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -92,6 +90,12 @@ const { t } = useLanguage()
 /* ==========================================
    📋 聯絡資訊頁面主佈局
    ========================================== */
+
+/* 📄 頁面容器 */
+.contact-page {
+  width: 100%;
+  min-height: calc(100vh - 200px);
+}
 
 /* 左右分欄容器 */
 .contact-layout {
@@ -261,8 +265,13 @@ const { t } = useLanguage()
 }
 
 @media (max-width: 768px) {
+  .contact-page {
+    min-height: auto;
+  }
+
   .contact-layout {
     margin: 0 -16px;
+    overflow: visible;
   }
 
   .map-section {
@@ -275,6 +284,7 @@ const { t } = useLanguage()
 
   .info-section {
     padding: 40px 24px;
+    overflow: visible;
   }
 
   .contact-title {
@@ -285,6 +295,7 @@ const { t } = useLanguage()
   .contact-intro {
     font-size: 14px;
     margin-bottom: 32px;
+    line-height: 1.6;
   }
 
   .contact-details {
@@ -299,33 +310,73 @@ const { t } = useLanguage()
   .detail-item {
     flex-direction: column;
     gap: 4px;
+    font-size: 14px;
+    line-height: 1.7;
   }
 
   .detail-label {
     min-width: auto;
+    font-weight: 500;
+    color: #666;
+  }
+
+  .email-link {
+    word-break: break-all;
+  }
+
+  .version-text {
+    font-size: 12px;
   }
 }
 
 @media (max-width: 480px) {
+  .contact-page {
+    padding: 0;
+  }
+
+  .contact-layout {
+    margin: 0 -12px;
+    min-height: auto;
+  }
+
+  .map-section {
+    min-height: 250px;
+  }
+
+  .map-section iframe {
+    min-height: 250px;
+  }
+
   .info-section {
-    padding: 32px 20px;
+    padding: 32px 16px;
   }
 
   .contact-title {
-    font-size: 22px;
+    font-size: 20px;
+    line-height: 1.4;
   }
 
   .contact-intro {
     font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 24px;
   }
 
   .detail-title {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .detail-item,
   .about-text {
-    font-size: 13px;
+    font-size: 12px;
+  }
+
+  .contact-details {
+    gap: 20px;
+  }
+
+  .detail-block {
+    padding-bottom: 20px;
   }
 }
 </style>
