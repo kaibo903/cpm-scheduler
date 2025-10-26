@@ -15,7 +15,7 @@ const zhTW: Translations = {
   nav: {
     home: '首頁',
     tools: '工具',
-    contact: '聯絡資訊'
+    contact: '聯絡我們'
   },
 
   home: {
@@ -75,8 +75,9 @@ const zhTW: Translations = {
     addedTasks: '已新增作業',
     taskName: '作業名稱',
     duration: '工期',
-    startDate: '開始日期',
-    resources: '項目明細',
+    startDate: '開始時間',
+    endDate: '結束時間',
+    resources: '資源',
     resourceName: '資源名稱',
     resourceQuantity: '數量',
     unitPrice: '單價',
@@ -118,8 +119,6 @@ const zhTW: Translations = {
     email: '電子郵件：',
     phone: '電話：',
     phoneValue: '暫不提供',
-    advisor: '指導教授：',
-    advisorName: '劉述舜 博士',
     version: '版本：v1.2 | 最後更新：2025年10月'
   },
 

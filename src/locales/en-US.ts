@@ -76,7 +76,8 @@ const enUS: Translations = {
     taskName: 'Task Name',
     duration: 'Duration',
     startDate: 'Start Date',
-    resources: 'Cost Items',
+    endDate: 'End Date',
+    resources: 'Resources',
     resourceName: 'Resource Name',
     resourceQuantity: 'Quantity',
     unitPrice: 'Unit Price',
@@ -118,8 +119,6 @@ const enUS: Translations = {
     email: 'Email:',
     phone: 'Phone:',
     phoneValue: 'Not Available',
-    advisor: 'Advisor:',
-    advisorName: 'Dr. Shu-Shun Liu',
     version: 'Version: v1.2 | Last Updated: October 2025'
   },
 

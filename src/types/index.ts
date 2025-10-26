@@ -40,6 +40,8 @@ export interface CPMTask {
   predecessors: Dependency[]    // 前置作業（含關係類型）
   successors: Dependency[]      // 後續作業（含關係類型）
   resources?: Resource[]        // 資源列表（可選，含資源與其他成本）
+  startDate?: string            // 開始時間（可選，用戶輸入）
+  endDate?: string              // 結束時間（可選，用戶輸入）
   
   // CPM 計算結果
   es?: number                   // 最早開始時間 (Earliest Start)

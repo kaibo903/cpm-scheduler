@@ -53,7 +53,7 @@
             <thead>
               <tr>
                 <th>{{ t.cpmResult.taskName }}</th>
-                <th class="right">{{ t.cpmResult.duration }}</th>
+                <th>{{ t.cpmResult.duration }}</th>
                 <th>{{ t.cpmResult.es }}</th>
                 <th>{{ t.cpmResult.ef }}</th>
                 <th>{{ t.cpmResult.ls }}</th>
@@ -355,12 +355,12 @@ thead {
 }
 
 th {
-  padding: 8px 10px;
+  padding: 8px 12px;
   text-align: center;
   font-weight: 400;
-  font-size: 11px;
+  font-size: 12px;
   color: #666;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
   white-space: nowrap;
 }
 
@@ -373,8 +373,8 @@ th.right {
 }
 
 td {
-  padding: 8px 10px;
-  font-size: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
   color: #333;
   line-height: 1.4;
   vertical-align: middle;
@@ -396,7 +396,7 @@ tbody tr:hover {
 }
 
 .task-duration-cell {
-  text-align: right;
+  text-align: center;
 }
 
 .task-name {

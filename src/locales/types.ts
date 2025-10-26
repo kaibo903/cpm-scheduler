@@ -81,6 +81,7 @@ export interface Translations {
     taskName: string
     duration: string
     startDate: string
+    endDate: string
     resources: string
     resourceName: string
     resourceQuantity: string

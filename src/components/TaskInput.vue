@@ -27,6 +27,7 @@
               min="1"
               max="999"
               placeholder=""
+              @change="onDurationChange"
               @keyup.enter="addTask"
             />
           </div>
@@ -38,6 +39,19 @@
               v-model="newTask.startDate"
               type="date"
               placeholder=""
+              @change="calculateEndDate"
+              @keyup.enter="addTask"
+            />
+          </div>
+
+          <div class="form-group form-group-date">
+            <label for="end-date">{{ t.planning.endDate }}</label>
+            <input
+              id="end-date"
+              v-model="newTask.endDate"
+              type="date"
+              placeholder=""
+              @change="calculateStartDate"
               @keyup.enter="addTask"
             />
           </div>
@@ -159,7 +173,7 @@
 
         <!-- 🎯 資源與成本輸入區域 -->
         <div class="resources-section">
-          <label class="section-label">成本項目</label>
+          <label class="section-label">資源</label>
           
           <div class="resources-table">
             <div class="resources-header">
@@ -193,7 +207,7 @@
                     type="text"
                     placeholder=""
                     @input="handleQuantityInput($event, index)"
-                    @blur="updateResourceCost(index)"
+                    @blur="handleQuantityBlur($event, index)"
                   />
                 </div>
                 <div class="col-price">
@@ -202,7 +216,7 @@
                     type="text"
                     placeholder=""
                     @input="handlePriceInput($event, index)"
-                    @blur="updateResourceCost(index)"
+                    @blur="handlePriceBlur($event, index)"
                   />
                 </div>
                 <div class="col-cost">
@@ -231,14 +245,14 @@
                 type="button"
                 class="btn-add-resource-row"
                 @click="addResourceRow"
-                title="新增項目"
+                title="新增資源"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="16"></line>
                   <line x1="8" y1="12" x2="16" y2="12"></line>
                 </svg>
-                <span>新增項目</span>
+                <span>新增資源</span>
               </button>
             </div>
           </div>
@@ -268,10 +282,12 @@
             <tr>
               <th>{{ t.planning.taskName }}</th>
               <th>{{ t.planning.duration }}</th>
-              <th>{{ t.planning.resources }}</th>
-              <th>{{ t.planning.totalCost }}</th>
+              <th>開始時間</th>
+              <th>結束時間</th>
               <th>{{ t.planning.predecessors }}</th>
               <th>{{ t.planning.successors }}</th>
+              <th>{{ t.planning.resources }}</th>
+              <th>{{ t.planning.totalCost }}</th>
               <th>{{ t.planning.actions }}</th>
             </tr>
           </thead>
@@ -279,20 +295,8 @@
             <tr v-for="task in tasks" :key="task.id">
               <td class="task-name">{{ task.name }}</td>
               <td class="task-duration">{{ task.duration }}</td>
-              <td class="task-resources">
-                <span v-if="!task.resources || task.resources.length === 0" class="empty">無</span>
-                <div v-else class="resources-display">
-                  <div v-for="resource in task.resources" :key="resource.id" class="resource-display-item">
-                    {{ resource.name }} × {{ resource.quantity }}
-                  </div>
-                </div>
-              </td>
-              <td class="task-cost">
-                <span v-if="!task.resources || task.resources.length === 0" class="empty">-</span>
-                <span v-else class="cost-amount">
-                  ${{ calculateTaskTotalCost(task).toLocaleString() }}
-                </span>
-              </td>
+              <td class="task-date">{{ formatStartDate(task) }}</td>
+              <td class="task-date">{{ formatEndDate(task) }}</td>
               <td class="task-deps">
                 <span v-if="task.predecessors.length === 0" class="empty">無</span>
                 <div v-else class="deps-list">
@@ -308,6 +312,20 @@
                     {{ depName }}
                   </div>
                 </div>
+              </td>
+              <td class="task-resources">
+                <span v-if="!task.resources || task.resources.length === 0" class="empty">無</span>
+                <div v-else class="resources-display">
+                  <div v-for="resource in task.resources" :key="resource.id" class="resource-display-item">
+                    {{ resource.name }} × {{ resource.quantity }}
+                  </div>
+                </div>
+              </td>
+              <td class="task-cost">
+                <span v-if="!task.resources || task.resources.length === 0" class="empty">-</span>
+                <span v-else class="cost-amount">
+                  ${{ calculateTaskTotalCost(task).toLocaleString() }}
+                </span>
               </td>
               <td class="task-actions">
                 <button class="btn-icon btn-icon-edit" @click="editTask(task.id)" title="編輯">
@@ -374,6 +392,7 @@ const newTask = ref({
   name: '',
   duration: null as number | null,
   startDate: '',
+  endDate: '',
   resources: [] as Resource[],
   predecessors: [] as Dependency[],
   successors: [] as Dependency[]
@@ -447,6 +466,69 @@ function calculateTaskTotalCost(task: CPMTask): number {
   return task.resources.reduce((total, resource) => {
     return total + (resource.totalCost || 0)
   }, 0)
+}
+
+// 📅 當工期變更時，自動更新日期
+function onDurationChange() {
+  // 優先根據開始時間計算結束時間
+  if (newTask.value.startDate && newTask.value.duration) {
+    calculateEndDate()
+  } 
+  // 如果沒有開始時間但有結束時間，則計算開始時間
+  else if (newTask.value.endDate && newTask.value.duration) {
+    calculateStartDate()
+  }
+}
+
+// 📅 當開始時間變更時，自動計算結束時間
+function calculateEndDate() {
+  if (newTask.value.startDate && newTask.value.duration) {
+    const startDate = new Date(newTask.value.startDate)
+    const endDate = new Date(startDate)
+    endDate.setDate(startDate.getDate() + newTask.value.duration)
+    const dateStr = endDate.toISOString().split('T')[0]
+    newTask.value.endDate = dateStr || ''
+  }
+}
+
+// 📅 當結束時間變更時，自動計算開始時間
+function calculateStartDate() {
+  if (newTask.value.endDate && newTask.value.duration) {
+    const endDate = new Date(newTask.value.endDate)
+    const startDate = new Date(endDate)
+    startDate.setDate(endDate.getDate() - newTask.value.duration)
+    const dateStr = startDate.toISOString().split('T')[0]
+    newTask.value.startDate = dateStr || ''
+  }
+}
+
+// 📅 格式化開始時間
+function formatStartDate(task: CPMTask): string {
+  if (task.startDate) {
+    // 將 YYYY-MM-DD 格式轉換為 YYYY/MM/DD 格式
+    return task.startDate.replace(/-/g, '/')
+  }
+  if (task.es !== undefined) {
+    return `第${task.es}天`
+  }
+  return '-'
+}
+
+// 📅 格式化結束時間
+function formatEndDate(task: CPMTask): string {
+  if (task.startDate && task.duration) {
+    // 如果有開始時間，計算結束時間
+    const startDate = new Date(task.startDate)
+    const endDate = new Date(startDate)
+    endDate.setDate(startDate.getDate() + task.duration)
+    const dateStr = endDate.toISOString().split('T')[0]
+    // 將 YYYY-MM-DD 格式轉換為 YYYY/MM/DD 格式
+    return dateStr ? dateStr.replace(/-/g, '/') : '-'
+  }
+  if (task.ef !== undefined) {
+    return `第${task.ef}天`
+  }
+  return '-'
 }
 
 function addPredecessor(taskId: string, type: DependencyType = 'FS') {
@@ -540,8 +622,18 @@ function handleQuantityInput(event: Event, index: number) {
   const value = input.value.replace(/,/g, '') // 移除逗號
   const numValue = value ? parseInt(value) : undefined
   resource.quantity = numValue
-  // 立即更新顯示格式
-  input.value = numValue ? numValue.toLocaleString() : ''
+}
+
+// 🔧 處理數量失去焦點
+function handleQuantityBlur(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  const resource = newTask.value.resources[index]
+  if (!resource) return
+  
+  // 格式化顯示
+  input.value = resource.quantity ? resource.quantity.toLocaleString() : ''
+  // 更新成本
+  updateResourceCost(index)
 }
 
 // 🔧 處理單價輸入
@@ -553,8 +645,18 @@ function handlePriceInput(event: Event, index: number) {
   const value = input.value.replace(/,/g, '') // 移除逗號
   const numValue = value ? parseFloat(value) : undefined
   resource.unitPrice = numValue
-  // 立即更新顯示格式
-  input.value = numValue ? numValue.toLocaleString() : ''
+}
+
+// 🔧 處理單價失去焦點
+function handlePriceBlur(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  const resource = newTask.value.resources[index]
+  if (!resource) return
+  
+  // 格式化顯示
+  input.value = resource.unitPrice ? resource.unitPrice.toLocaleString() : ''
+  // 更新成本
+  updateResourceCost(index)
 }
 
 // 🔧 更新資源成本
@@ -595,7 +697,9 @@ function addTask() {
           duration: newTask.value.duration!,
           predecessors: mergedPredecessors,
           successors: mergedSuccessors,
-          resources: [...newTask.value.resources]
+          resources: [...newTask.value.resources],
+          startDate: newTask.value.startDate || undefined,
+          endDate: newTask.value.endDate || undefined
         }
         
         emit('updateTask', task)
@@ -612,7 +716,9 @@ function addTask() {
         duration: newTask.value.duration!,
         predecessors: [...newTask.value.predecessors],
         successors: [...newTask.value.successors],
-        resources: [...newTask.value.resources]
+        resources: [...newTask.value.resources],
+        startDate: newTask.value.startDate || undefined,
+        endDate: newTask.value.endDate || undefined
       }
       emit('updateTask', task)
       editingTaskId.value = null
@@ -639,7 +745,9 @@ function addTask() {
           duration: newTask.value.duration!, // 使用新的工期
           predecessors: mergedPredecessors,
           successors: mergedSuccessors,
-          resources: [...newTask.value.resources]
+          resources: [...newTask.value.resources],
+          startDate: newTask.value.startDate || undefined,
+          endDate: newTask.value.endDate || undefined
         }
         
         emit('updateTask', task)
@@ -654,7 +762,9 @@ function addTask() {
         duration: newTask.value.duration!,
         predecessors: [...newTask.value.predecessors],
         successors: [...newTask.value.successors],
-        resources: [...newTask.value.resources]
+        resources: [...newTask.value.resources],
+        startDate: newTask.value.startDate || undefined,
+        endDate: newTask.value.endDate || undefined
       }
       emit('addTask', task)
     }
@@ -665,6 +775,7 @@ function addTask() {
     name: '',
     duration: null,
     startDate: '',
+    endDate: '',
     resources: [],
     predecessors: [],
     successors: []
@@ -700,7 +811,8 @@ function editTask(taskId: string) {
   newTask.value = {
     name: task.name,
     duration: task.duration,
-    startDate: '',
+    startDate: task.startDate || '',
+    endDate: task.endDate || '',
     resources: task.resources ? [...task.resources] : [],
     predecessors: [...task.predecessors],
     successors: [...task.successors]
@@ -716,6 +828,7 @@ function cancelEdit() {
     name: '',
     duration: null,
     startDate: '',
+    endDate: '',
     resources: [],
     predecessors: [],
     successors: []
@@ -939,10 +1052,10 @@ function getTaskNames(dependencies: Dependency[]): string[] {
   gap: 20px;
 }
 
-/* 基本信息行 - 3欄網格佈局 */
+/* 基本信息行 - 4欄網格佈局 */
 .basic-info-row {
   display: grid;
-  grid-template-columns: 2fr 100px 1.2fr;
+  grid-template-columns: 2fr 100px 1.2fr 1.2fr;
   gap: 16px;
   align-items: end;
 }
@@ -974,7 +1087,7 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 }
 
 .resources-table {
-  border: 1px solid #e0e0e0;
+  border: none;
   border-radius: 2px;
   overflow: hidden;
 }
@@ -1092,7 +1205,7 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 .resources-footer {
   padding: 8px;
   background: white;
-  border-top: 1px solid #e0e0e0;
+  border-top: none;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1196,14 +1309,13 @@ function getTaskNames(dependencies: Dependency[]): string[] {
 
 .form-group input,
 .form-group select {
-  padding: 11px 14px;
+  padding: 8px 12px;
   border: 1px solid #d0d0d0;
   border-radius: 2px;
   font-size: 14px;
   transition: border-color 0.2s;
   background: #fafafa;
   color: #333;
-  height: 44px;
   box-sizing: border-box;
 }
 
@@ -1225,7 +1337,7 @@ function getTaskNames(dependencies: Dependency[]): string[] {
   font-weight: 500;
   font-size: 15px;
   letter-spacing: 0.5px;
-  padding: 11px 8px;
+  padding: 8px 12px;
 }
 
 /* 移除數字輸入框的上下箭頭 */
@@ -1371,16 +1483,19 @@ th {
   font-weight: 400;
   font-size: 12px;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* 📊 表格欄位寬度設定 */
-th:nth-child(1) { width: 14%; }  /* 作業名稱 */
-th:nth-child(2) { width: 10%; text-align: center; }  /* 工期 */
-th:nth-child(3) { width: 18%; }  /* 項目明細 */
-th:nth-child(4) { width: 12%; text-align: right; }  /* 成本 */
-th:nth-child(5) { width: 20%; }  /* 前置作業 */
-th:nth-child(6) { width: 20%; }  /* 後續作業 */
-th:nth-child(7) { width: 6%; }   /* 操作 */
+th:nth-child(1) { width: 10%; }  /* 作業名稱 */
+th:nth-child(2) { width: 5%; text-align: center; }  /* 工期 */
+th:nth-child(3) { width: 14%; text-align: center; }  /* 開始時間 */
+th:nth-child(4) { width: 14%; text-align: center; }  /* 結束時間 */
+th:nth-child(5) { width: 15%; }  /* 前置作業 */
+th:nth-child(6) { width: 15%; }  /* 後續作業 */
+th:nth-child(7) { width: 14%; }  /* 資源 */
+th:nth-child(8) { width: 10%; text-align: right; }  /* 成本 */
+th:nth-child(9) { width: 3%; }   /* 操作 */
 
 tbody tr {
   border-bottom: 1px solid #f0f0f0;
@@ -1397,6 +1512,8 @@ td {
   font-size: 13px;
   color: #333;
   line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .task-name {
@@ -1406,17 +1523,28 @@ td {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 250px;
+  vertical-align: middle;
 }
 
 .task-duration {
   color: #666;
   font-weight: 400;
   text-align: center;
+  vertical-align: middle;
+}
+
+.task-date {
+  color: #666;
+  font-weight: 400;
+  text-align: center;
+  font-size: 13px;
+  vertical-align: middle;
 }
 
 .task-resources {
   color: #666;
   font-size: 12px;
+  vertical-align: middle;
 }
 
 .task-resources .empty {
@@ -1429,6 +1557,7 @@ td {
   flex-direction: column;
   gap: 3px;
   align-items: flex-start;
+  justify-content: center;
 }
 
 .resource-display-item {
@@ -1440,6 +1569,7 @@ td {
 .task-deps {
   color: #666;
   font-size: 12px;
+  vertical-align: middle;
 }
 
 .task-deps .empty {
@@ -1452,6 +1582,7 @@ td {
   flex-direction: column;
   gap: 3px;
   align-items: flex-start;
+  justify-content: center;
 }
 
 .dep-item {
@@ -1463,6 +1594,7 @@ td {
 .task-cost {
   text-align: right;
   font-size: 13px;
+  vertical-align: middle;
 }
 
 .task-cost .empty {
@@ -1478,10 +1610,13 @@ td {
 
 .task-actions {
   display: flex;
+  flex-direction: row;
   gap: 4px;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
-  padding: 4px !important;
+  padding: 8px 4px !important;
+  vertical-align: middle;
+  height: 100%;
 }
 
 /* 🎨 圖示按鈕 - 扁平化設計 */
