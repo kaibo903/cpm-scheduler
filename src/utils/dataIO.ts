@@ -416,3 +416,220 @@ export function importFromJSON(file: File): Promise<any> {
     reader.readAsText(file, 'UTF-8')
   })
 }
+
+// ============================================
+// 📊 TCT 工具專用的 CSV 匯入/匯出功能
+// ============================================
+
+/**
+ * 📤 匯出 TCT 作業資料為 CSV
+ */
+export function exportTCTTasksToCSV(tasks: any[]): void {
+  const headers = ['作業名稱', '正常工期(天)', '趕工工期(天)', '正常成本(元)', '趕工成本(元)', '前置作業']
+  
+  const rows = tasks.map(task => {
+    // 處理前置作業列表
+    const predecessors = task.predecessors && task.predecessors.length > 0
+      ? task.predecessors.join(';')
+      : '---'
+    
+    return [
+      task.name,
+      task.normal_duration.toString(),
+      task.crash_duration.toString(),
+      task.normal_cost.toString(),
+      task.crash_cost.toString(),
+      predecessors
+    ]
+  })
+  
+  const csvContent = [
+    headers.map(h => `"${h}"`).join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n')
+  
+  // 加入 BOM 以確保 Excel 正確顯示繁體中文
+  const BOM = '\uFEFF'
+  downloadFile(BOM + csvContent, 'tct_tasks.csv', 'text/csv;charset=utf-8;')
+}
+
+/**
+ * 📤 匯出 TCT 計算結果為 CSV
+ */
+export function exportTCTResultToCSV(result: any): void {
+  if (!result || !result.success) {
+    throw new Error('無有效的計算結果可匯出')
+  }
+  
+  // 摘要資訊
+  let csvContent = '工期-成本權衡最佳化結果\n\n'
+  csvContent += '摘要資訊\n'
+  csvContent += '最佳專案工期(天),' + result.optimal_duration + '\n'
+  csvContent += '最低總成本(元),' + result.optimal_cost + '\n'
+  csvContent += '總趕工成本(元),' + result.crash_cost + '\n'
+  csvContent += '總間接成本(元),' + result.overhead_cost + '\n'
+  csvContent += '正常專案工期(天),' + result.normal_duration + '\n'
+  csvContent += '正常總成本(元),' + result.normal_cost + '\n'
+  csvContent += '成本節省(元),' + result.cost_saving + '\n\n'
+  
+  // 趕工計畫表
+  csvContent += '趕工計畫\n'
+  csvContent += '趕工循環,總工期(天),壓縮作業,直接成本(元),間接成本(元),預期罰金(元),總成本(元)\n'
+  result.crashIterations.forEach((iter: any) => {
+    const iterLabel = iter.iteration === 0 ? '正常情況' : `第${iter.iteration}次`
+    csvContent += `"${iterLabel}",${iter.duration},"${iter.crashedTask}",${iter.directCost},${iter.overheadCost},${iter.penaltyCost},${iter.totalCost}\n`
+  })
+  
+  csvContent += '\n作業執行計畫\n'
+  csvContent += '作業名稱,開工時間(天),實際工期(天),趕工天數(天),趕工成本(元),要徑\n'
+  result.tasks.forEach((task: any) => {
+    const crashCost = (task.crash_days || 0) * (task.crash_cost_per_day || 0)
+    const isCritical = task.isCritical ? '是' : '否'
+    csvContent += `"${task.name}",${task.start_time},${task.actual_duration},${task.crash_days || 0},${crashCost},"${isCritical}"\n`
+  })
+  
+  csvContent += '\n要徑\n'
+  csvContent += result.criticalPath.join(' → ') + '\n'
+  
+  const BOM = '\uFEFF'
+  downloadFile(BOM + csvContent, 'tct_result.csv', 'text/csv;charset=utf-8;')
+}
+
+/**
+ * 📥 從 CSV 匯入 TCT 作業資料
+ */
+export function importTCTTasksFromCSV(file: File): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string
+        const tasks = parseTCTCSV(text)
+        resolve(tasks)
+      } catch (error) {
+        reject(error)
+      }
+    }
+    
+    reader.onerror = () => {
+      reject(new Error('檔案讀取失敗'))
+    }
+    
+    reader.readAsText(file, 'UTF-8')
+  })
+}
+
+/**
+ * 📋 解析 TCT CSV 文字為作業列表
+ */
+function parseTCTCSV(text: string): any[] {
+  const lines = text.trim().split('\n')
+  if (lines.length < 2) {
+    throw new Error('CSV 檔案格式錯誤：至少需要標題列和一筆資料')
+  }
+  
+  // 跳過標題列
+  const dataLines = lines.slice(1)
+  
+  const tasks: any[] = []
+  const taskNames = new Set<string>()
+  
+  dataLines.forEach((line, index) => {
+    const fields = parseCSVLine(line)
+    if (fields.length < 5) {
+      console.warn(`第 ${index + 2} 列資料不完整，已跳過`)
+      return
+    }
+    
+    const name = fields[0]?.trim() || ''
+    const normalDuration = parseInt(fields[1]?.trim() || '0', 10)
+    const crashDuration = parseInt(fields[2]?.trim() || '0', 10)
+    const normalCost = parseFloat(fields[3]?.trim() || '0')
+    const crashCost = parseFloat(fields[4]?.trim() || '0')
+    const predecessorsStr = fields[5]?.trim() || ''
+    
+    // 驗證資料
+    if (!name) {
+      throw new Error(`第 ${index + 2} 列：作業名稱不可為空`)
+    }
+    
+    if (taskNames.has(name)) {
+      throw new Error(`第 ${index + 2} 列：作業名稱 "${name}" 重複`)
+    }
+    
+    if (isNaN(normalDuration) || normalDuration <= 0) {
+      throw new Error(`第 ${index + 2} 列：正常工期必須為正數`)
+    }
+    
+    if (isNaN(crashDuration) || crashDuration <= 0) {
+      throw new Error(`第 ${index + 2} 列：趕工工期必須為正數`)
+    }
+    
+    if (crashDuration > normalDuration) {
+      throw new Error(`第 ${index + 2} 列：趕工工期不可大於正常工期`)
+    }
+    
+    if (isNaN(normalCost) || normalCost < 0) {
+      throw new Error(`第 ${index + 2} 列：正常成本不可為負數`)
+    }
+    
+    if (isNaN(crashCost) || crashCost < 0) {
+      throw new Error(`第 ${index + 2} 列：趕工成本不可為負數`)
+    }
+    
+    if (crashCost < normalCost) {
+      throw new Error(`第 ${index + 2} 列：趕工成本應大於或等於正常成本`)
+    }
+    
+    // 解析前置作業
+    const predecessors: string[] = []
+    if (predecessorsStr && predecessorsStr !== '---') {
+      const predNames = predecessorsStr.split(/[;,]/).map(s => s.trim()).filter(s => s && s !== '---')
+      predecessors.push(...predNames)
+    }
+    
+    tasks.push({
+      name,
+      normal_duration: normalDuration,
+      crash_duration: crashDuration,
+      normal_cost: normalCost,
+      crash_cost: crashCost,
+      predecessors
+    })
+    
+    taskNames.add(name)
+  })
+  
+  // 驗證前置作業是否存在
+  tasks.forEach((task, index) => {
+    task.predecessors.forEach((predName: string) => {
+      if (!taskNames.has(predName)) {
+        throw new Error(`第 ${index + 2} 列：前置作業 "${predName}" 不存在`)
+      }
+    })
+  })
+  
+  return tasks
+}
+
+/**
+ * 📥 下載 TCT CSV 範本
+ */
+export function downloadTCTCSVTemplate(): void {
+  const template = [
+    ['作業名稱', '正常工期(天)', '趕工工期(天)', '正常成本(元)', '趕工成本(元)', '前置作業'],
+    ['基礎開挖', '10', '7', '100000', '130000', '---'],
+    ['結構施工', '15', '12', '200000', '250000', '基礎開挖'],
+    ['外牆裝修', '8', '6', '80000', '100000', '結構施工'],
+    ['內部裝修', '12', '9', '150000', '190000', '結構施工'],
+    ['水電工程', '10', '8', '120000', '150000', '外牆裝修;內部裝修']
+  ]
+  
+  const csvContent = template
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n')
+  
+  const BOM = '\uFEFF'
+  downloadFile(BOM + csvContent, 'tct_template.csv', 'text/csv;charset=utf-8;')
+}

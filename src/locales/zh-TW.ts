@@ -51,6 +51,8 @@ const zhTW: Translations = {
     subtitle: '選擇您需要使用的工具',
     planning: '進度規劃',
     planningDesc: '使用要徑法 (Critical Path Method) 進行專案進度規劃，計算最早/最晚時間，識別要徑作業。',
+    tct: '工期-成本權衡最佳化',
+    tctDesc: '透過趕工分析找出最佳的工期-成本平衡點，計算各作業的趕工方案，提供成本-時間權衡曲線與 Pareto 最佳解，協助專案管理者做出最佳決策。',
     labor: '工程臨時點工統計分析',
     laborDesc: '本系統用於統計與分析營建工程中臨時點工的出工與成本資料，結合雲端與行動裝置操作，協助營造廠即時掌握臨時人力使用情況、自動彙整歷史資料以支援預算估算與決策分析。',
     quality: '工程品質查驗',
@@ -161,6 +163,104 @@ const zhTW: Translations = {
     title: '匯入 CSV 檔案',
     description: '選擇包含作業資料的 CSV 檔案。檔案應包含以下欄位：作業名稱、工期(天)、前置作業、後續作業',
     cancel: '取消'
+  },
+
+  tct: {
+    title: '工期-成本權衡最佳化',
+    backButton: '← 返回工具列表',
+    subtitle: 'Time-Cost Trade-off Optimizer',
+    description: '透過趕工分析找出最佳的工期-成本平衡點',
+    
+    // 📊 輸入區域
+    inputSection: '作業資料輸入',
+    taskName: '作業名稱',
+    normalDuration: '正常工期',
+    crashDuration: '趕工工期',
+    normalCost: '正常成本',
+    crashCost: '趕工成本',
+    predecessors: '前置作業',
+    addTask: '新增作業',
+    importData: '匯入 CSV',
+    exportData: '匯出 CSV',
+    exportResults: '匯出結果',
+    downloadTemplate: '下載範本',
+    clearAll: '清空所有',
+    
+    // 📋 作業列表
+    taskListTitle: '已新增作業',
+    noTasks: '尚未新增任何作業',
+    actions: '操作',
+    edit: '編輯',
+    delete: '刪除',
+    
+    // 🎯 專案參數
+    projectParams: '專案參數設定',
+    overheadCostPerDay: '間接成本',
+    penaltyCostPerDay: '逾期罰金',
+    deadline: '契約工期',
+    budget: '預算上限',
+    calculate: '開始計算',
+    
+    // 📊 計算結果
+    resultsTitle: '最佳化結果',
+    noResults: '尚未執行計算，請先新增作業並設定參數',
+    optimalDuration: '最佳專案工期',
+    optimalCost: '最低總成本',
+    costBreakdown: '成本分解',
+    overheadCost: '間接成本',
+    reduced: '縮短',
+    
+    // 📈 執行計畫
+    executionPlan: '作業執行計畫',
+    startTime: '開工時間',
+    actualDuration: '實際工期',
+    crashDays: '趕工天數',
+    critical: '要徑',
+    total: '合計',
+    
+    // 📊 趕工計畫
+    crashPlan: '趕工計畫',
+    iterationColumn: '趕工循環',
+    durationColumn: '總工期',
+    crashedTaskColumn: '壓縮作業',
+    directCostColumn: '直接成本',
+    indirectCostColumn: '間接成本',
+    penaltyCostColumn: '逾期罰金',
+    totalCostColumn: '總成本',
+    iterationLabel: '第 {n} 次',
+    normalState: '正常情況',
+    
+    // 🔗 要徑
+    criticalPath: '要徑（Critical Path）',
+    
+    // 📉 成本-時間曲線
+    costTimeCurve: '成本-時間權衡曲線',
+    optimalPoint: '最佳點',
+    normalPoint: '正常點',
+    duration: '工期（天）',
+    cost: '成本（元）',
+    
+    // ⚠️ 錯誤訊息
+    errorInvalidData: '資料驗證失敗',
+    errorNoCriticalPath: '無法計算要徑',
+    errorInfeasible: '無可行解',
+    errorBudgetTooLow: '預算不足以完成專案',
+    errorDurationTooShort: '目標工期無法達成',
+    
+    // 💡 提示
+    tipNormalDuration: '作業在正常情況下所需的工作天數',
+    tipCrashDuration: '透過增加資源或加班可達到的最短工期',
+    tipNormalCost: '作業在正常工期下所需的總成本',
+    tipCrashCost: '作業在趕工工期下所需的總成本',
+    tipOverheadCost: '專案每延續一天的間接成本（管理、場租、人員等）',
+    tipPenaltyCost: '專案每逾期一天的罰款（相對於契約工期）',
+    tipDeadline: '契約規定的完工期限（天）',
+    startByAdding: '請先新增作業資料以開始使用',
+    
+    // 📊 單位
+    days: '天',
+    currency: '元',
+    perDay: '元/天'
   },
 
   footer: {

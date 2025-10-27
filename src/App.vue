@@ -3,21 +3,30 @@
     <header class="app-header">
       <div class="container">
         <div class="header-content">
-          <router-link to="/" class="header-text-link">
-            <div class="header-text">
-              <h1>工程進度規劃與控制課程解答工具</h1>
-              <p class="subtitle">Construction Planning and Scheduling Learning Assistant</p>
+          <!-- 🏢 左側：Logo 與網站名稱 -->
+          <router-link to="/" class="header-brand">
+            <div class="brand-logo">
+              <div class="logo-icon">
+                <div class="logo-bars">
+                  <span class="bar bar-1"></span>
+                  <span class="bar bar-2"></span>
+                </div>
+              </div>
+              <div class="brand-text">
+                <h1 class="brand-title">營建管理相關工具集</h1>
+                <p class="brand-subtitle">Construction Management Tools</p>
+              </div>
             </div>
           </router-link>
           
-          <!-- 🔗 頂部導航列 -->
+          <!-- 🔗 右側：導航列 -->
           <nav class="main-nav">
             <router-link 
               to="/"
               class="nav-item" 
               active-class="active"
               exact>
-              {{ t.nav.home }}
+              Home
             </router-link>
             <router-link 
               to="/tools"
@@ -31,12 +40,6 @@
               active-class="active">
               {{ t.nav.contact }}
             </router-link>
-            
-            <!-- 🌐 語言切換器 -->
-            <button class="lang-switcher" @click="toggleLanguage" :title="isEnglish ? '切換至繁體中文' : 'Switch to English'">
-              <span class="lang-icon">🌐</span>
-              <span class="lang-text">{{ isEnglish ? '中文' : 'EN' }}</span>
-            </button>
           </nav>
         </div>
       </div>
@@ -67,16 +70,12 @@
  * - 各頁面功能由對應的 View 組件負責
  */
 
-import { onMounted } from 'vue'
 import { useLanguage } from './composables/useLanguage'
 
-// 🌐 語言管理
-const { t, toggleLanguage, isEnglish, initLanguage } = useLanguage()
+// 🌐 語言管理（已停用切換功能，固定使用繁體中文）
+const { t } = useLanguage()
 
-// 🚀 初始化：載入儲存的語言設定
-onMounted(() => {
-  initLanguage()
-})
+// 注意：語言切換功能已停用，系統固定使用繁體中文
 </script>
 
 <style>
@@ -98,10 +97,11 @@ onMounted(() => {
 
 /* 📋 頂部標題列 */
 .app-header {
-  background: #fff;               /* 🎨 背景：白色 */
+  background: #ffffff;            /* 🎨 背景：純白色 */
   color: #333;                    /* 🎨 文字顏色：深灰色 */
-  padding: 32px 0;                /* 📏 上下內距：32px（可調整標題高度） */
-  border-bottom: 1px solid #e8e8e8; /* 🎨 底部邊框：淺灰色 */
+  padding: 28px 0;                /* 📏 上下內距：28px（增加高度） */
+  border-bottom: 1px solid #e5e5e5; /* 🎨 底部邊框：淺灰色 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); /* 🎨 輕微陰影 */
 }
 
 /* 📦 標題內容區 */
@@ -112,46 +112,78 @@ onMounted(() => {
   gap: 40px;                      /* 📏 標題與導航間距：40px */
 }
 
-/* 🔗 標題連結包裝 */
-.header-text-link {
-  flex: 1;                        /* 📏 佔據可用空間 */
-  text-decoration: none;          /* 🎨 移除底線 */
-  color: #333;                    /* 🎨 文字顏色：黑色 */
-  cursor: pointer;                /* 🖱️ 滑鼠游標變為手指 */
-  transition: opacity 0.2s ease;  /* 🎨 過渡效果 */
+/* 🏢 左側品牌區域 */
+.header-brand {
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
 }
 
-/* 🖱️ 標題連結所有狀態保持黑色 */
-.header-text-link:visited,
-.header-text-link:link,
-.header-text-link:active {
-  color: #333;                    /* 🎨 所有狀態都保持黑色 */
+.header-brand:hover {
+  opacity: 0.8;
 }
 
-/* 🖱️ 標題連結 Hover 效果 */
-.header-text-link:hover {
-  opacity: 0.7;                   /* 🎨 滑鼠移上時：半透明效果 */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* 📝 標題文字區 */
-.header-text {
-  flex: 1;
+/* 🎨 Logo 圖標 */
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: #333;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
 }
 
-/* 📝 主標題文字 */
-.app-header h1 {
-  margin: 0 0 8px 0;              /* 📏 底部間距：8px */
-  font-size: 24px;                /* 📏 文字大小：24px（可調整標題字體大小） */
-  font-weight: 500;               /* 📏 字重：中等粗體 */
-  letter-spacing: 1px;            /* 📏 字距：1px（讓文字更寬鬆） */
+.logo-bars {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
 }
 
-/* 📝 副標題文字 */
-.subtitle {
+.bar {
+  width: 6px;
+  background: white;
+  border-radius: 1px;
+}
+
+.bar-1 {
+  height: 12px;
+}
+
+.bar-2 {
+  height: 16px;
+}
+
+/* 📝 品牌文字 */
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-title {
   margin: 0;
-  font-size: 14px;                /* 📏 文字大小：14px（可調整副標題字體大小） */
-  color: #999;                    /* 🎨 文字顏色：淺灰色 */
-  font-weight: 400;               /* 📏 字重：正常 */
+  font-size: 22px;                /* 📏 字體加大 */
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 1px;
+}
+
+.brand-subtitle {
+  margin: 0;
+  font-size: 12px;                /* 📏 字體加大 */
+  color: #999;
+  letter-spacing: 0.5px;
+  font-weight: 400;
 }
 
 /* ==========================================
@@ -167,15 +199,14 @@ onMounted(() => {
 
 /* 📝 導航項目 */
 .nav-item {
-  padding: 12px 24px 10px 24px;  /* 📏 內距：上12px 左右24px 下10px */
+  padding: 8px 20px;              /* 📏 內距：上下8px 左右20px */
   background: transparent;
   border: none;
-  border-bottom: 3px solid transparent; /* 預設無底線 */
-  color: #666;                    /* 🎨 文字顏色：深灰 */
-  font-size: 15px;                /* 📏 文字大小 */
+  color: #999;                    /* 🎨 文字顏色：淺灰 */
+  font-size: 14px;                /* 📏 文字大小 */
   font-weight: 400;               /* 📏 字重 */
   cursor: pointer;
-  transition: all 0.2s;           /* ⚡ 過渡動畫 */
+  transition: all 0.3s;           /* ⚡ 過渡動畫 */
   position: relative;
   text-decoration: none;          /* 📏 移除連結底線 */
   white-space: nowrap;            /* 📏 不換行 */
@@ -184,14 +215,12 @@ onMounted(() => {
 
 .nav-item:hover {
   color: #333;                    /* 🎨 Hover：深灰色 */
-  background: #fafafa;            /* 🎨 Hover 背景：極淺灰 */
 }
 
 /* ✅ 當前啟用的導航項目 */
 .nav-item.active {
   color: #333;                    /* 🎨 文字顏色：深灰色 */
   font-weight: 500;               /* 📏 字重：中等粗體 */
-  border-bottom-color: #333;      /* 🎨 底線顏色：深灰色 */
 }
 
 /* ==========================================

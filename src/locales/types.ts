@@ -55,6 +55,8 @@ export interface Translations {
     subtitle: string
     planning: string
     planningDesc: string
+    tct: string
+    tctDesc: string
     labor: string
     laborDesc: string
     quality: string
@@ -170,6 +172,83 @@ export interface Translations {
     title: string
     description: string
     cancel: string
+  }
+
+  // 💰 TCT 工期-成本權衡最佳化
+  tct: {
+    title: string
+    backButton: string
+    subtitle: string
+    description: string
+    inputSection: string
+    taskName: string
+    normalDuration: string
+    crashDuration: string
+    normalCost: string
+    crashCost: string
+    predecessors: string
+    addTask: string
+    importData: string
+    exportData: string
+    exportResults: string
+    downloadTemplate: string
+    clearAll: string
+    taskListTitle: string
+    noTasks: string
+    actions: string
+    edit: string
+    delete: string
+    projectParams: string
+    overheadCostPerDay: string
+    penaltyCostPerDay: string
+    deadline: string
+    budget: string
+    calculate: string
+    resultsTitle: string
+    noResults: string
+    optimalDuration: string
+    optimalCost: string
+    costBreakdown: string
+    overheadCost: string
+    reduced: string
+    executionPlan: string
+    startTime: string
+    actualDuration: string
+    crashDays: string
+    critical: string
+    total: string
+    crashPlan: string
+    iterationColumn: string
+    durationColumn: string
+    crashedTaskColumn: string
+    directCostColumn: string
+    indirectCostColumn: string
+    penaltyCostColumn: string
+    totalCostColumn: string
+    iterationLabel: string
+    normalState: string
+    criticalPath: string
+    costTimeCurve: string
+    optimalPoint: string
+    normalPoint: string
+    duration: string
+    cost: string
+    errorInvalidData: string
+    errorNoCriticalPath: string
+    errorInfeasible: string
+    errorBudgetTooLow: string
+    errorDurationTooShort: string
+    tipNormalDuration: string
+    tipCrashDuration: string
+    tipNormalCost: string
+    tipCrashCost: string
+    tipOverheadCost: string
+    tipPenaltyCost: string
+    tipDeadline: string
+    startByAdding: string
+    days: string
+    currency: string
+    perDay: string
   }
 
   // 📋 頁尾

@@ -15,7 +15,8 @@ import { createRouter, createWebHistory } from 'vue-router'
  * 路徑說明：
  * - / → 首頁
  * - /tools → 工具頁面
- * - /tools/planning → 進度規劃計算頁面
+ * - /tools/planning → 進度規劃計算頁面 (CPM)
+ * - /tools/tct → 工期-成本權衡最佳化頁面 (TCT)
  * - /contact → 聯絡資訊頁面
  */
 const router = createRouter({
@@ -43,6 +44,14 @@ const router = createRouter({
       component: () => import('../views/PlanningView.vue'),
       meta: {
         title: '進度規劃 (CPM)'
+      }
+    },
+    {
+      path: '/tools/tct',
+      name: 'tct',
+      component: () => import('../views/TCTView.vue'),
+      meta: {
+        title: '工期-成本權衡最佳化 (TCT)'
       }
     },
     {

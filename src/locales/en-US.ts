@@ -51,6 +51,8 @@ const enUS: Translations = {
     subtitle: 'Select the tool you need',
     planning: 'Schedule Planning',
     planningDesc: 'Use the Critical Path Method (CPM) for project schedule planning, calculate earliest/latest times, and identify critical activities.',
+    tct: 'Time-Cost Trade-off Optimizer',
+    tctDesc: 'Find the optimal time-cost balance through crashing analysis, calculate crashing plans for each activity, provide cost-time trade-off curves and Pareto optimal solutions to help project managers make the best decisions.',
     labor: 'Temporary Labor Statistics',
     laborDesc: 'This system is used for statistical analysis of temporary labor attendance and cost data in construction projects, integrating cloud and mobile device operations to help contractors track labor usage in real-time and automatically compile historical data to support budget estimation and decision analysis.',
     quality: 'Quality Inspection',
@@ -161,6 +163,104 @@ const enUS: Translations = {
     title: 'Import CSV File',
     description: 'Select a CSV file containing task data. The file should include the following fields: Task Name, Duration (days), Predecessors, Successors',
     cancel: 'Cancel'
+  },
+
+  tct: {
+    title: 'Time-Cost Trade-off Optimizer',
+    backButton: '← Back to Tools',
+    subtitle: 'Time-Cost Trade-off Optimizer',
+    description: 'Find the optimal time-cost balance through crashing analysis',
+    
+    // 📊 Input Section
+    inputSection: 'Task Data Input',
+    taskName: 'Task Name',
+    normalDuration: 'Normal Duration',
+    crashDuration: 'Crash Duration',
+    normalCost: 'Normal Cost',
+    crashCost: 'Crash Cost',
+    predecessors: 'Predecessors',
+    addTask: 'Add Task',
+    importData: 'Import CSV',
+    exportData: 'Export CSV',
+    exportResults: 'Export Results',
+    downloadTemplate: 'Download Template',
+    clearAll: 'Clear All',
+    
+    // 📋 Task List
+    taskListTitle: 'Added Tasks',
+    noTasks: 'No tasks added yet',
+    actions: 'Actions',
+    edit: 'Edit',
+    delete: 'Delete',
+    
+    // 🎯 Project Parameters
+    projectParams: 'Project Parameters',
+    overheadCostPerDay: 'Overhead Cost',
+    penaltyCostPerDay: 'Delay Penalty',
+    deadline: 'Contract Duration',
+    budget: 'Budget Limit',
+    calculate: 'Calculate',
+    
+    // 📊 Results
+    resultsTitle: 'Optimization Results',
+    noResults: 'No results yet. Please add tasks and set parameters',
+    optimalDuration: 'Optimal Duration',
+    optimalCost: 'Optimal Cost',
+    costBreakdown: 'Cost Breakdown',
+    overheadCost: 'Overhead Cost',
+    reduced: 'Reduced',
+    
+    // 📈 Execution Plan
+    executionPlan: 'Execution Plan',
+    startTime: 'Start Time',
+    actualDuration: 'Actual Duration',
+    crashDays: 'Crash Days',
+    critical: 'Critical',
+    total: 'Total',
+    
+    // 📊 Crash Plan
+    crashPlan: 'Crash Plan',
+    iterationColumn: 'Iteration',
+    durationColumn: 'Duration',
+    crashedTaskColumn: 'Crashed Task',
+    directCostColumn: 'Direct Cost',
+    indirectCostColumn: 'Indirect Cost',
+    penaltyCostColumn: 'Penalty Cost',
+    totalCostColumn: 'Total Cost',
+    iterationLabel: 'Iteration {n}',
+    normalState: 'Normal',
+    
+    // 🔗 Critical Path
+    criticalPath: 'Critical Path',
+    
+    // 📉 Cost-Time Curve
+    costTimeCurve: 'Cost-Time Trade-off Curve',
+    optimalPoint: 'Optimal Point',
+    normalPoint: 'Normal Point',
+    duration: 'Duration (days)',
+    cost: 'Cost ($)',
+    
+    // ⚠️ Error Messages
+    errorInvalidData: 'Data validation failed',
+    errorNoCriticalPath: 'Unable to calculate critical path',
+    errorInfeasible: 'No feasible solution',
+    errorBudgetTooLow: 'Budget insufficient to complete project',
+    errorDurationTooShort: 'Target duration cannot be achieved',
+    
+    // 💡 Tips
+    tipNormalDuration: 'Work days required under normal circumstances',
+    tipCrashDuration: 'Shortest duration achievable by adding resources or overtime',
+    tipNormalCost: 'Total cost required at normal duration',
+    tipCrashCost: 'Total cost required at crash duration',
+    tipOverheadCost: 'Indirect cost per project day (management, rent, personnel, etc.)',
+    tipPenaltyCost: 'Penalty per day delayed (relative to contract duration)',
+    tipDeadline: 'Contract deadline for project completion (days)',
+    startByAdding: 'Please add task data to get started',
+    
+    // 📊 Units
+    days: 'days',
+    currency: '$',
+    perDay: '$/day'
   },
 
   footer: {

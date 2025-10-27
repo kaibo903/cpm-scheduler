@@ -1,11 +1,14 @@
 <template>
   <div class="container">
-    <!-- 🔙 頂部導航列：返回按鈕 + 頁面標題 -->
-    <div class="top-navigation">
-      <router-link to="/tools" class="back-button">
-        {{ t.planning.backButton }}
-      </router-link>
-      <h2 class="page-title">{{ t.planning.title }}</h2>
+    <!-- 🎯 標題列區域 -->
+    <div class="header-section">
+      <div class="header-container">
+        <router-link to="/tools" class="back-button">
+          {{ t.planning.backButton }}
+        </router-link>
+        <h1 class="page-title">{{ t.planning.title }}</h1>
+        <p class="page-subtitle">Construction Planning and Scheduling Learning Assistant</p>
+      </div>
     </div>
 
     <!-- 🛠️ 工具列 -->
@@ -306,51 +309,153 @@ function showMessage(msg: string, type: 'success' | 'error' | 'info') {
 
 <style scoped>
 /* ==========================================
-   🔙 頂部導航列樣式
+   🎯 標題列區域樣式
    ========================================== */
 
-.top-navigation {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 10px;
-  padding: 10px 0;
+.header-section {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  padding: 30px 0;
+  margin: -20px -20px 30px -20px;
+  border-bottom: 3px solid #d0d0d0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .back-button {
   display: inline-flex;
   align-items: center;
   padding: 8px 16px;
-  color: #666;
+  color: #555;
   text-decoration: none;
   font-size: 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 2px;
+  font-weight: 500;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   background: #fff;
-  transition: all 0.2s;
-  white-space: nowrap;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
 }
 
 .back-button:hover {
   color: #333;
-  border-color: #333;
-  background: #fafafa;
+  border-color: #999;
+  background: #f9f9f9;
+  transform: translateX(-3px);
 }
 
 .page-title {
-  font-size: 20px;
-  color: #666;
+  font-size: 32px;
+  color: #333;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #777;
   margin: 0;
   font-weight: 400;
   letter-spacing: 0.5px;
 }
 
+/* ==========================================
+   📊 圖表分頁標籤樣式
+   ========================================== */
+
+.chart-tabs {
+  display: flex;
+  gap: 5px;
+  background: #f8f8f8;
+  padding: 8px;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.tab-button:hover::before {
+  left: 100%;
+}
+
+.tab-button:hover {
+  color: #333;
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.tab-button.active:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+}
+
+.chart-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.chart-content {
+  padding: 20px;
+  background: #fff;
+}
+
+.chart-panel {
+  min-height: 400px;
+}
+
 /* 📱 響應式設計 */
 @media (max-width: 768px) {
-  .top-navigation {
-    margin-bottom: 20px;
-    padding: 16px 0;
-    gap: 16px;
+  .header-section {
+    padding: 20px 0;
+    margin: -15px -15px 20px -15px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 12px;
   }
 
   .back-button {
@@ -358,8 +463,9 @@ function showMessage(msg: string, type: 'success' | 'error' | 'info') {
     font-size: 13px;
   }
 
-  .page-title {
-    font-size: 18px;
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 </style>
