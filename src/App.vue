@@ -7,9 +7,22 @@
           <router-link to="/" class="header-brand">
             <div class="brand-logo">
               <div class="logo-icon">
-                <div class="logo-bars">
-                  <span class="bar bar-1"></span>
-                  <span class="bar bar-2"></span>
+                <div class="logo-grid">
+                  <div class="grid-row">
+                    <span class="grid-cell"></span>
+                    <span class="grid-cell"></span>
+                    <span class="grid-cell"></span>
+                  </div>
+                  <div class="grid-row">
+                    <span class="grid-cell active"></span>
+                    <span class="grid-cell active"></span>
+                    <span class="grid-cell"></span>
+                  </div>
+                  <div class="grid-row">
+                    <span class="grid-cell"></span>
+                    <span class="grid-cell active"></span>
+                    <span class="grid-cell active"></span>
+                  </div>
                 </div>
               </div>
               <div class="brand-text">
@@ -131,36 +144,50 @@ const { t } = useLanguage()
   gap: 12px;
 }
 
-/* 🎨 Logo 圖標 */
+/* 🎨 Logo 圖標 - 黑白設計 */
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background: #333;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
 }
 
-.logo-bars {
+.logo-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  background: #000;
+}
+
+.logo-grid {
   display: flex;
-  gap: 3px;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
 }
 
-.bar {
-  width: 6px;
-  background: white;
+.grid-row {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.grid-cell {
+  width: 7px;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 1px;
+  transition: all 0.3s ease;
 }
 
-.bar-1 {
-  height: 12px;
-}
-
-.bar-2 {
-  height: 16px;
+.grid-cell.active {
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* 📝 品牌文字 */

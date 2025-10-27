@@ -1,126 +1,82 @@
 <template>
   <div class="home-view">
-    <div class="container">
-      <!-- 🏠 首頁主要內容 -->
-      <section class="hero-section">
-        <div class="hero-content">
-          <h1 class="hero-title">{{ t.home.heroTitle }}</h1>
-          <h2 class="hero-subtitle">{{ t.home.heroSubtitle }}</h2>
-          <p class="hero-description">
-            {{ t.home.heroDescription }}
-          </p>
-          
-          <div class="hero-buttons">
-            <router-link to="/tools" class="btn-primary">
-              {{ t.home.startButton }}
-            </router-link>
-            <router-link to="/contact" class="btn-secondary">
-              {{ t.home.contactButton }}
-            </router-link>
-          </div>
-        </div>
-      </section>
-
-      <!-- 📊 功能特色區 -->
-      <section class="features-section">
-        <h2 class="section-title">{{ t.home.featuresTitle }}</h2>
+    <!-- 🏠 Hero 主視覺區域 -->
+    <section class="hero-section">
+      <div class="hero-container">
+        <h1 class="hero-title">營建管理相關工具集</h1>
+        <p class="hero-subtitle">Construction Management Tools</p>
+        <p class="hero-description">提供工程進度規劃、成本控制、資源分配等數據分析工具，協助營建專案管理者做出更精準的決策</p>
         
-        <div class="features-grid">
-          <!-- 功能 1 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-wrapper purple">
-                <span>CPM</span>
-              </div>
-            </div>
-            <h3 class="feature-title">{{ t.home.feature1Title }}</h3>
-            <p class="feature-text">
-              {{ t.home.feature1Desc }}
-            </p>
+        <div class="hero-actions">
+          <router-link to="/tools" class="btn-primary">
+            探索工具集
+          </router-link>
+        </div>
+      </div>
+    </section>
+
+    <!-- 📊 工具集列表 -->
+    <section class="tools-section">
+      <div class="tools-container">
+        <div class="section-header">
+          <h2 class="section-title">工具集</h2>
+          <p class="section-desc">結合實務案例與理論分析，提供完整的營建管理解決方案</p>
+        </div>
+        
+        <div class="tools-grid">
+          <!-- 工具 1 -->
+          <router-link to="/tools/planning" class="tool-card">
+            <div class="card-number">01</div>
+            <h3 class="tool-title">進度規劃</h3>
+            <p class="tool-description">使用要徑法（Critical Path Method）進行專案進度規劃，計算最早／最晚時間，識別要徑作業</p>
+          </router-link>
+
+          <!-- 工具 2 -->
+          <router-link to="/tools/tct" class="tool-card">
+            <div class="card-number">02</div>
+            <h3 class="tool-title">工期-成本權衡最佳化</h3>
+            <p class="tool-description">透過壓縮分析找出最佳的工期-成本平衡點，計算各作業的壓縮方案，提供成本-時間權衡曲線與 Pareto 最佳解</p>
+          </router-link>
+
+          <!-- 工具 3 -->
+          <div class="tool-card disabled">
+            <div class="card-number">03</div>
+            <h3 class="tool-title">工程臨時點工統計分析</h3>
+            <p class="tool-description">本系統用於臨時計酬分析建造工程中臨時點工的出工與成本資料，提供雲端運作</p>
+            <p class="tool-status">敬請期待</p>
           </div>
 
-          <!-- 功能 2 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-wrapper orange">
-                <span>LABOR</span>
-              </div>
-            </div>
-            <h3 class="feature-title">{{ t.home.feature2Title }}</h3>
-            <p class="feature-text">
-              {{ t.home.feature2Desc }}
-            </p>
-          </div>
-
-          <!-- 功能 3 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-wrapper green">
-                <span>QA</span>
-              </div>
-            </div>
-            <h3 class="feature-title">{{ t.home.feature3Title }}</h3>
-            <p class="feature-text">
-              {{ t.home.feature3Desc }}
-            </p>
-          </div>
-
-          <!-- 功能 4 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-wrapper blue">
-                <span>LOG</span>
-              </div>
-            </div>
-            <h3 class="feature-title">{{ t.home.feature4Title }}</h3>
-            <p class="feature-text">
-              {{ t.home.feature4Desc }}
-            </p>
-          </div>
-
-          <!-- 功能 5 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-wrapper purple-pink">
-                <span>PLAN</span>
-              </div>
-            </div>
-            <h3 class="feature-title">{{ t.home.feature5Title }}</h3>
-            <p class="feature-text">
-              {{ t.home.feature5Desc }}
-            </p>
+          <!-- 工具 4 -->
+          <div class="tool-card disabled">
+            <div class="card-number">04</div>
+            <h3 class="tool-title">工程品質查驗</h3>
+            <p class="tool-description">本系統用於施工區段之品質管理與自主查驗，透過雲端驗收表單裝載立合規進度</p>
+            <p class="tool-status">敬請期待</p>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- 🎯 關於系統 -->
-      <section class="about-section">
-        <div class="about-content">
-          <h2 class="section-title">{{ t.home.aboutTitle }}</h2>
-          <p class="about-text">
-            {{ t.home.aboutText1 }}
-          </p>
-          <p class="about-text">
-            {{ t.home.aboutText2 }}
-          </p>
-          
-          <div class="about-stats">
-            <div class="stat-item">
-              <div class="stat-number">{{ t.home.stat1Number }}</div>
-              <div class="stat-label">{{ t.home.stat1Label }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">{{ t.home.stat2Number }}</div>
-              <div class="stat-label">{{ t.home.stat2Label }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">{{ t.home.stat3Number }}</div>
-              <div class="stat-label">{{ t.home.stat3Label }}</div>
-            </div>
+    <!-- 🎯 關於工具集 -->
+    <section class="about-section">
+      <div class="about-container">
+        <h2 class="section-title">關於本工具集</h2>
+        <div class="about-grid">
+          <div class="about-item">
+            <h3 class="about-item-title">工具來源</h3>
+            <p class="about-item-text">整合實務工程案例與學術研究成果，提供真實可靠的營建管理工具</p>
+          </div>
+          <div class="about-item">
+            <h3 class="about-item-title">應用場景</h3>
+            <p class="about-item-text">適用於工程教育、專案規劃、進度控制、成本分析等多種應用情境</p>
+          </div>
+          <div class="about-item">
+            <h3 class="about-item-title">持續更新</h3>
+            <p class="about-item-text">定期新增工具與功能，持續優化分析能力，提供最新的營建管理解決方案</p>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -147,302 +103,482 @@ const { t } = useLanguage()
    ========================================== */
 
 .home-view {
-  min-height: calc(100vh - 200px);
+  min-height: 100vh;
+  background: white;
 }
 
 /* ==========================================
-   🎨 Hero 區域
+   🎨 Hero 區域 - 現代無印風格
    ========================================== */
 
 .hero-section {
-  text-align: center;
-  padding: 80px 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  margin: 0 -40px;
+  position: relative;
+  padding: 140px 0 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.hero-content {
-  max-width: 800px;
+.hero-container {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
   margin: 0 auto;
   padding: 0 40px;
+  text-align: center;
 }
 
 .hero-title {
-  font-size: 48px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 16px 0;
-  letter-spacing: 2px;
+  font-size: 52px;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+  letter-spacing: 3px;
+  line-height: 1.5;
+  font-family: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .hero-subtitle {
-  font-size: 20px;
-  font-weight: 300;
-  color: #34495e;
-  margin: 0 0 24px 0;
-  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #999;
+  margin: 0 0 36px 0;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
 }
 
 .hero-description {
   font-size: 16px;
-  color: #5a6c7d;
-  line-height: 1.8;
-  margin: 0 0 40px 0;
+  color: #666;
+  line-height: 1.9;
+  margin: 0 0 48px 0;
+  letter-spacing: 0.2px;
+  font-weight: 300;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.hero-buttons {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.btn-primary,
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 32px;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.3s ease;
+.hero-actions {
+  margin-top: 48px;
 }
 
 .btn-primary {
-  background: #333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 52px;
+  background: #1a1a1a;
   color: white;
-  border: 2px solid #333;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  border: 1px solid #1a1a1a;
+  border-radius: 50px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-primary:hover {
-  background: #000;
-  border-color: #000;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.btn-secondary {
   background: white;
-  color: #333;
-  border: 2px solid #333;
-}
-
-.btn-secondary:hover {
-  background: #333;
-  color: white;
+  color: #1a1a1a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ==========================================
-   📊 功能特色區
+   📊 工具集列表區域 - 現代無印風格
    ========================================== */
 
-.features-section {
-  padding: 80px 0;
+.tools-section {
+  padding: 80px 0 80px;
+  background: #fafafa;
 }
 
-.section-title {
-  font-size: 32px;
-  font-weight: 500;
-  color: #2c3e50;
-  text-align: center;
-  margin: 0 0 48px 0;
-  letter-spacing: 1px;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 32px;
-}
-
-.feature-card {
-  background: white;
-  padding: 32px 24px;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #d0d0d0;
-}
-
-.feature-icon {
-  margin-bottom: 20px;
-}
-
-.icon-wrapper {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.icon-wrapper span {
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.icon-wrapper.purple {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.icon-wrapper.orange {
-  background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
-}
-
-.icon-wrapper.green {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.icon-wrapper.blue {
-  background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
-}
-
-.icon-wrapper.purple-pink {
-  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-}
-
-.feature-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 12px 0;
-}
-
-.feature-text {
-  font-size: 14px;
-  color: #5a6c7d;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* ==========================================
-   🎯 關於系統區
-   ========================================== */
-
-.about-section {
-  padding: 80px 0;
-  background: #f8f9fa;
-  margin: 0 -40px;
-}
-
-.about-content {
-  max-width: 900px;
+.tools-container {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 40px;
 }
 
-.about-text {
-  font-size: 16px;
-  color: #5a6c7d;
-  line-height: 1.8;
-  margin: 0 0 24px 0;
+.section-header {
   text-align: center;
+  margin-bottom: 50px;
 }
 
-.about-stats {
+.section-title {
+  font-size: 42px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.5px;
+}
+
+.section-desc {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+  letter-spacing: 0.3px;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.tool-card {
+  background: white;
+  padding: 36px;
+  text-decoration: none;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
-  justify-content: center;
-  gap: 60px;
-  margin-top: 48px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  position: relative;
+  min-height: 240px;
+  border-radius: 16px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
 }
 
-.stat-item {
+.tool-card:hover {
+  border-color: #333;
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.tool-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tool-card.disabled:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+  border-color: #e8e8e8;
+}
+
+.card-number {
+  font-size: 56px;
+  font-weight: 200;
+  color: #f0f0f0;
+  margin: 0 0 20px 0;
+  line-height: 1;
+  letter-spacing: -3px;
+  transition: all 0.35s ease;
+}
+
+.tool-card:hover .card-number {
+  color: #333;
+  transform: scale(1.02);
+}
+
+.tool-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+  transition: all 0.3s ease;
+}
+
+.tool-card:hover .tool-title {
+  color: #000;
+}
+
+.tool-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.7;
+  margin: 0;
+  letter-spacing: 0.1px;
+  font-weight: 300;
+  flex: 1;
+}
+
+.tool-status {
+  font-size: 11px;
+  color: #999;
+  margin: 18px 0 0 0;
+  letter-spacing: 0.8px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/* ==========================================
+   🎯 關於工具集區 - 現代無印風格
+   ========================================== */
+
+.about-section {
+  padding: 80px 0 80px;
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+}
+
+.about-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px;
   text-align: center;
 }
 
-.stat-number {
-  font-size: 48px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 8px;
+.about-container .section-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.5px;
 }
 
-.stat-label {
-  font-size: 14px;
-  color: #7f8c8d;
-  letter-spacing: 1px;
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  margin-top: 50px;
+}
+
+.about-item {
+  text-align: center;
+  padding: 32px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+.about-item:hover {
+  transform: translateY(-4px);
+  background: white;
+  border-color: #333;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.about-item-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.2px;
+}
+
+.about-item-text {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.8;
+  margin: 0 auto;
+  letter-spacing: 0.1px;
+  font-weight: 300;
+  max-width: 600px;
 }
 
 /* ==========================================
    📱 響應式設計
    ========================================== */
 
+@media (max-width: 1024px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-section {
-    padding: 60px 0;
-    margin: 0 -16px;
+    padding: 100px 0 80px;
   }
 
-  .hero-content {
+  .hero-container {
     padding: 0 24px;
   }
 
   .hero-title {
     font-size: 36px;
+    letter-spacing: 2.5px;
   }
 
   .hero-subtitle {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .hero-description {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .btn-primary {
+    padding: 16px 40px;
+    font-size: 13px;
+  }
+
+  .tools-section {
+    padding: 60px 0 70px;
+  }
+
+  .tools-container {
+    padding: 0 24px;
+  }
+
+  .section-header {
+    margin-bottom: 40px;
+  }
+
+  .section-title {
+    font-size: 30px;
+    margin-bottom: 16px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+  }
+
+  .tool-card {
+    padding: 32px;
+    min-height: 220px;
+    border-radius: 14px;
+  }
+
+  .card-number {
+    font-size: 68px;
+    margin-bottom: 28px;
+  }
+
+  .tool-title {
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  .tool-description {
+    font-size: 14px;
+  }
+
+  .tool-status {
+    font-size: 11px;
+    margin-top: 20px;
+  }
+
+  .about-section {
+    padding: 60px 0 70px;
+  }
+
+  .about-container {
+    padding: 0 24px;
+  }
+
+  .about-container .section-title {
+    font-size: 28px;
+  }
+
+  .about-grid {
+    margin-top: 40px;
+    gap: 24px;
+  }
+
+  .about-item {
+    padding: 28px;
+  }
+
+  .about-item-title {
     font-size: 16px;
+  }
+
+  .about-item-text {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 80px 0 60px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+    letter-spacing: 2px;
+  }
+
+  .hero-subtitle {
+    font-size: 10px;
+    letter-spacing: 1.8px;
   }
 
   .hero-description {
     font-size: 14px;
+    line-height: 1.8;
   }
 
-  .hero-buttons {
-    flex-direction: column;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-  }
-
-  .features-section {
-    padding: 60px 0;
+  .btn-primary {
+    padding: 14px 36px;
+    font-size: 13px;
   }
 
   .section-title {
     font-size: 28px;
-    margin-bottom: 32px;
   }
 
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .tools-section {
+    padding: 50px 0 60px;
+  }
+
+  .section-title {
+    font-size: 26px;
+  }
+
+  .tool-card {
+    padding: 28px;
+    min-height: 220px;
+    border-radius: 14px;
+  }
+
+  .card-number {
+    font-size: 48px;
+    margin-bottom: 18px;
+  }
+
+  .tool-title {
+    font-size: 19px;
+    margin-bottom: 14px;
+  }
+
+  .tool-description {
+    font-size: 13px;
+  }
+
+  .tool-status {
+    font-size: 11px;
+    margin-top: 16px;
   }
 
   .about-section {
-    padding: 60px 0;
-    margin: 0 -16px;
+    padding: 50px 0 60px;
   }
 
-  .about-content {
-    padding: 0 24px;
+  .about-container .section-title {
+    font-size: 24px;
   }
 
-  .about-stats {
-    gap: 40px;
+  .about-grid {
+    gap: 20px;
+    margin-top: 36px;
   }
 
-  .stat-number {
-    font-size: 36px;
+  .about-item {
+    padding: 24px;
+  }
+
+  .about-item-title {
+    font-size: 15px;
+  }
+
+  .about-item-text {
+    font-size: 13px;
   }
 }
 </style>
