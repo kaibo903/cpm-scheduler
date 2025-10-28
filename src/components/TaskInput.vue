@@ -382,6 +382,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   addTask: [task: CPMTask]
   updateTask: [task: CPMTask]
+  batchUpdateTasks: [tasks: CPMTask[]]
   removeTask: [taskId: string]
   clearTasks: []
   calculate: []
@@ -720,7 +721,113 @@ function addTask() {
         startDate: newTask.value.startDate || undefined,
         endDate: newTask.value.endDate || undefined
       }
-      emit('updateTask', task)
+      
+      // 🔧 檢測被刪除或修改的依賴關係，同步更新另一端
+      const originalTask = props.tasks.find(t => t.id === editingTaskId.value)
+      if (originalTask) {
+        // 找出被刪除的前置作業
+        const removedPreds = originalTask.predecessors.filter(
+          oldDep => !newTask.value.predecessors.some(newDep => newDep.taskId === oldDep.taskId)
+        )
+        // 找出被刪除的後續作業
+        const removedSuccs = originalTask.successors.filter(
+          oldDep => !newTask.value.successors.some(newDep => newDep.taskId === oldDep.taskId)
+        )
+        
+        // 🔍 找出被修改的前置作業（type 或 lag 改變）
+        const modifiedPreds = newTask.value.predecessors.filter(newDep => {
+          const oldDep = originalTask.predecessors.find(d => d.taskId === newDep.taskId)
+          return oldDep && (oldDep.type !== newDep.type || oldDep.lag !== newDep.lag)
+        })
+        
+        // 🔍 找出被修改的後續作業（type 或 lag 改變）
+        const modifiedSuccs = newTask.value.successors.filter(newDep => {
+          const oldDep = originalTask.successors.find(d => d.taskId === newDep.taskId)
+          return oldDep && (oldDep.type !== newDep.type || oldDep.lag !== newDep.lag)
+        })
+        
+        // 如果有依賴需要同步處理（刪除或修改），使用批次更新模式
+        if (removedPreds.length > 0 || removedSuccs.length > 0 || 
+            modifiedPreds.length > 0 || modifiedSuccs.length > 0) {
+          console.log('🎯 檢測到依賴變化：')
+          console.log('  - 刪除的前置作業：', removedPreds.length)
+          console.log('  - 刪除的後續作業：', removedSuccs.length)
+          console.log('  - 修改的前置作業：', modifiedPreds.length)
+          console.log('  - 修改的後續作業：', modifiedSuccs.length)
+          
+          // 🔄 收集所有需要更新的任務
+          const tasksToUpdate: CPMTask[] = []
+          
+          // 更新被刪除的前置作業（從它們的 successors 中移除當前任務）
+          for (const removedPred of removedPreds) {
+            const predTask = props.tasks.find(t => t.id === removedPred.taskId)
+            if (predTask) {
+              tasksToUpdate.push({
+                ...predTask,
+                successors: predTask.successors.filter(dep => dep.taskId !== task.id)
+              })
+            }
+          }
+          
+          // 更新被刪除的後續作業（從它們的 predecessors 中移除當前任務）
+          for (const removedSucc of removedSuccs) {
+            const succTask = props.tasks.find(t => t.id === removedSucc.taskId)
+            if (succTask) {
+              tasksToUpdate.push({
+                ...succTask,
+                predecessors: succTask.predecessors.filter(dep => dep.taskId !== task.id)
+              })
+            }
+          }
+          
+          // 🔄 更新被修改的前置作業（同步更新它們的 successors）
+          for (const modifiedPred of modifiedPreds) {
+            const predTask = props.tasks.find(t => t.id === modifiedPred.taskId)
+            if (predTask) {
+              const updatedSuccessors = predTask.successors.map(dep => 
+                dep.taskId === task.id 
+                  ? { taskId: task.id, type: modifiedPred.type, lag: modifiedPred.lag }
+                  : dep
+              )
+              tasksToUpdate.push({
+                ...predTask,
+                successors: updatedSuccessors
+              })
+            }
+          }
+          
+          // 🔄 更新被修改的後續作業（同步更新它們的 predecessors）
+          for (const modifiedSucc of modifiedSuccs) {
+            const succTask = props.tasks.find(t => t.id === modifiedSucc.taskId)
+            if (succTask) {
+              const updatedPredecessors = succTask.predecessors.map(dep => 
+                dep.taskId === task.id 
+                  ? { taskId: task.id, type: modifiedSucc.type, lag: modifiedSucc.lag }
+                  : dep
+              )
+              tasksToUpdate.push({
+                ...succTask,
+                predecessors: updatedPredecessors
+              })
+            }
+          }
+          
+          // 添加當前任務
+          tasksToUpdate.push(task)
+          
+          console.log('📤 發出批次更新事件，共', tasksToUpdate.length, '個任務')
+          
+          // 🎯 發出批次更新事件
+          emit('batchUpdateTasks', tasksToUpdate)
+        } else {
+          // 沒有依賴被刪除或修改，正常更新
+          emit('updateTask', task)
+        }
+      } else {
+        emit('updateTask', task)
+      }
+      
+      // 🔄 清除編輯狀態
       editingTaskId.value = null
     }
   } else {

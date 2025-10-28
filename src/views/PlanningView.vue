@@ -43,6 +43,7 @@
           :tasks="tasks"
           @add-task="handleAddTask"
           @update-task="handleUpdateTask"
+          @batch-update-tasks="handleBatchUpdateTasks"
           @remove-task="handleRemoveTask"
           @clear-tasks="handleClearTasks"
           @calculate="handleCalculate"
@@ -138,7 +139,7 @@
  * - CSV 匯入匯出功能
  */
 
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import TaskInput from '../components/TaskInput.vue'
 import CPMResultTable from '../components/CPMResultTable.vue'
 import GanttChart from '../components/GanttChart.vue'
@@ -197,14 +198,46 @@ function handleRemoveTask(taskId: string) {
   }
 }
 
-function handleMergeTasks() {
+// 🔄 批次更新任務（編輯時的依賴同步）
+async function handleBatchUpdateTasks(tasksToUpdate: CPMTask[]) {
+  console.log('🔄 批次更新開始，任務數量：', tasksToUpdate.length)
+  console.log('📝 要更新的任務：', tasksToUpdate.map(t => ({ id: t.id, name: t.name })))
+  
+  // 🎯 批次更新所有相關任務
+  for (const updatedTask of tasksToUpdate) {
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+    if (index !== -1) {
+      console.log(`✅ 更新任務 ${index}: ${updatedTask.name}`)
+      tasks.value[index] = updatedTask
+    } else {
+      console.warn(`⚠️ 找不到任務: ${updatedTask.id}`)
+    }
+  }
+  
+  // 🔄 使用 nextTick 確保所有響應式更新都完成
+  await nextTick()
+  
+  // 🎯 重建依賴關係，確保更新傳播到所有作業
+  console.log('🔧 重建依賴關係...')
+  tasks.value = buildTaskDependencies(tasks.value)
+  console.log('✅ 批次更新完成')
+  
+  showMessage(t.value.messages.taskUpdated, 'success')
+}
+
+async function handleMergeTasks() {
   isMerging = true
-  // 延遲重建依賴關係和顯示訊息，確保所有更新和刪除都完成
-  setTimeout(() => {
-    tasks.value = buildTaskDependencies(tasks.value)
-    showMessage(t.value.messages.tasksMerged, 'success')
-    isMerging = false
-  }, 100)
+  
+  // 🔄 使用 nextTick 確保所有響應式更新都完成
+  await nextTick()
+  
+  // 🎯 額外延遲確保所有異步更新都穩定
+  await new Promise(resolve => setTimeout(resolve, 150))
+  
+  // 重建依賴關係，確保更新傳播到所有作業
+  tasks.value = buildTaskDependencies(tasks.value)
+  showMessage(t.value.messages.tasksMerged, 'success')
+  isMerging = false
 }
 
 function handleClearTasks() {
