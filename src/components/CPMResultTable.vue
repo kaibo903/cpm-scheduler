@@ -46,7 +46,7 @@
       </div>
 
       <!-- CPM 詳細結果表格 -->
-      <div class="table-section">
+      <div class="table-section result-table">
         <h3>{{ t.cpmResult.detailedResults }}</h3>
         <div class="table-container">
           <table>

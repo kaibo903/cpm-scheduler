@@ -1,8 +1,8 @@
-# 🏗️ Construction Planning and Scheduling Learning Assistant PRD v1.26
+# 🏗️ Construction Planning and Scheduling Learning Assistant PRD v1.30
 **（工程進度規劃與控制課程解答工具）**  
 Author: 張凱博  
-Date: 2025-10-27  
-Version: v1.26  
+Date: 2025-10-28  
+Version: v1.30  
 
 ---
 
@@ -365,6 +365,872 @@ interface Project {
 - [ ] 支援繁體中文
 
 ## 九、版本更新記錄（Version History）
+
+### v1.30 更新內容 (2025-10-28) - 修復合併重複作業的資料丟失與自我依賴問題
+
+#### 問題描述
+用戶報告每當作業有重複時，執行合併都會有問題。經過檢查發現兩個嚴重錯誤：
+
+1. **資料丟失問題**：合併後的任務只保留了 id、name、duration、predecessors、successors，丟失了其他重要屬性
+2. **自我依賴問題**：如果重複任務之間有依賴關係，合併後可能產生任務依賴自己的情況
+
+#### 根本原因
+
+**問題 1：資料丟失**
+
+在 `mergeDuplicateTasks` 函數第 936-942 行（修復前），創建合併後的任務時：
+
+```typescript
+const updatedTask: CPMTask = {
+  id: primaryTask.id,
+  name: primaryTask.name,
+  duration: maxDuration,
+  predecessors: mergedPredecessors,
+  successors: mergedSuccessors
+}
+```
+
+這會導致丟失：
+- ❌ `resources` - 資源資料
+- ❌ `startDate` 和 `endDate` - 日期資訊
+- ❌ 其他可能的自定義屬性
+
+**問題 2：自我依賴**
+
+合併邏輯示例：
+```
+假設有兩個重複的任務 A：
+- A₁（工期 5 天，前置作業：B）
+- A₂（工期 3 天，前置作業：A₁）
+
+合併後：
+- A（工期 5 天，前置作業：B, A₁）
+
+但 A₁ 會被映射為 A，所以：
+- A（工期 5 天，前置作業：B, A）← 自我依賴！
+```
+
+這會導致：
+- ❌ CPM 計算時檢測到循環依賴
+- ❌ 拓撲排序失敗
+- ❌ 無法完成計算
+
+#### 修復方案
+
+**修復檔案：** `src/components/TaskInput.vue`
+
+**1️⃣ 修復資料丟失問題**
+
+使用展開運算符保留所有原有屬性：
+
+```typescript
+// 🔧 修復前
+const updatedTask: CPMTask = {
+  id: primaryTask.id,
+  name: primaryTask.name,
+  duration: maxDuration,
+  predecessors: mergedPredecessors,
+  successors: mergedSuccessors
+}
+
+// ✅ 修復後
+const updatedTask: CPMTask = {
+  ...primaryTask,  // 🎯 保留所有原有屬性
+  duration: maxDuration,
+  predecessors: mergedPredecessors,
+  successors: mergedSuccessors,
+  resources: mergedResources.length > 0 ? mergedResources : primaryTask.resources,
+  // 清除 CPM 計算結果，需要重新計算
+  es: undefined,
+  ef: undefined,
+  ls: undefined,
+  lf: undefined,
+  tf: undefined,
+  ff: undefined,
+  isCritical: undefined,
+  isStart: undefined,
+  isEnd: undefined
+}
+```
+
+**額外改進：智能合併資源**
+
+```typescript
+// 🔄 合併資源（保留所有資源，避免重複）
+if (task.resources && task.resources.length > 0) {
+  for (const resource of task.resources) {
+    const exists = mergedResources.some(r => 
+      r.name === resource.name && r.type === resource.type
+    )
+    if (!exists) {
+      mergedResources.push({ ...resource })
+    }
+  }
+}
+```
+
+**2️⃣ 修復自我依賴問題**
+
+在合併依賴時過濾掉指向自己的依賴：
+
+```typescript
+// 🔄 過濾掉指向自己的依賴（防止自我循環）
+const validPreds = updatedPreds.filter(dep => dep.taskId !== primaryTask.id)
+const validSuccs = updatedSuccs.filter(dep => dep.taskId !== primaryTask.id)
+
+mergedPredecessors = mergeDependencies(mergedPredecessors, validPreds)
+mergedSuccessors = mergeDependencies(mergedSuccessors, validSuccs)
+```
+
+同樣在第三階段（更新其他任務的依賴）也添加過濾：
+
+```typescript
+// 🔄 過濾掉自我依賴並去除重複
+const filteredPreds = updatedPredecessors.filter(dep => dep.taskId !== task.id)
+const filteredSuccs = updatedSuccessors.filter(dep => dep.taskId !== task.id)
+
+const uniquePredecessors = mergeDependencies([], filteredPreds)
+const uniqueSuccessors = mergeDependencies([], filteredSuccs)
+```
+
+**3️⃣ 修復無效依賴顯示問題**
+
+用戶報告合併後任務列表中出現了 task ID 而不是任務名稱（如 `task-176167145265-uxxdy3z79-6`）。
+
+**根本原因：**
+某些任務的依賴關係沒有被更新，仍然指向已被刪除的任務 ID。
+
+**解決方案：**
+1. 修改執行順序：先刪除任務，再更新任務
+2. 添加額外驗證步驟：
+   - 建立有效的 task ID 集合
+   - 檢查所有未被更新的任務
+   - 過濾掉指向無效 ID 的依賴
+
+```typescript
+// 🔍 額外驗證：確保所有剩餘任務的依賴都指向有效的 ID
+const validTaskIds = new Set<string>()
+for (const task of props.tasks) {
+  if (!tasksToRemove.includes(task.id)) {
+    validTaskIds.add(task.id)
+  }
+}
+
+// 檢查並過濾無效的依賴
+const hasInvalidDeps = 
+  task.predecessors.some(dep => !validTaskIds.has(dep.taskId)) ||
+  task.successors.some(dep => !validTaskIds.has(dep.taskId))
+
+if (hasInvalidDeps) {
+  // 過濾掉無效的依賴
+  const validPreds = task.predecessors.filter(dep => validTaskIds.has(dep.taskId))
+  const validSuccs = task.successors.filter(dep => validTaskIds.has(dep.taskId))
+  updatedTasks.push({ ...task, predecessors: validPreds, successors: validSuccs })
+}
+```
+
+#### 修復效果
+
+**修復前：**
+- ❌ 合併後資源、日期等資料丟失
+- ❌ 可能產生自我依賴（A 依賴 A）
+- ❌ 導致 CPM 計算失敗（檢測到循環）
+- ❌ 無法完成進度規劃
+- ❌ 任務列表中顯示原始 task ID 而非任務名稱
+- ❌ 某些依賴關係指向不存在的任務
+
+**修復後：**
+- ✅ 保留所有任務屬性（resources、startDate、endDate 等）
+- ✅ 智能合併資源，避免重複
+- ✅ 自動過濾自我依賴
+- ✅ 自動過濾無效依賴
+- ✅ 所有依賴都指向有效的任務
+- ✅ 任務列表正確顯示任務名稱
+- ✅ CPM 計算正常
+- ✅ 合併功能完全正常運作
+
+#### 測試場景
+
+**場景 1：基本合併**
+```
+步驟：
+1. 新增任務 A（工期 5 天，資源：工人 × 10）
+2. 新增任務 A（工期 3 天，資源：機具 × 2）
+3. 執行合併
+
+預期結果：
+- 合併為一個任務 A
+- 工期取最大值 5 天
+- 資源包含：工人 × 10、機具 × 2
+- 不會丟失資料
+```
+
+**場景 2：自我依賴防護**
+```
+步驟：
+1. 新增任務 A（工期 5 天）
+2. 新增任務 B（工期 3 天，前置作業：A）
+3. 新增任務 A（工期 4 天，前置作業：B）
+4. 執行合併
+
+合併前依賴關係：
+- A₁ → B → A₂
+
+合併後（錯誤情況）：
+- A → B → A ← 自我循環！
+
+合併後（正確修復）：
+- A → B ← 自動過濾掉 A → A
+- CPM 計算正常
+```
+
+**場景 3：複雜合併**
+```
+步驟：
+1. 新增多個重複任務，各有不同：
+   - A₁（工期 5 天，前置：B，資源：工人 × 10）
+   - A₂（工期 3 天，前置：C，資源：機具 × 2）
+   - A₃（工期 4 天，後續：D，資源：材料 × 100）
+2. 執行合併
+
+預期結果：
+- 工期：5 天（取最大）
+- 前置作業：B, C
+- 後續作業：D
+- 資源：工人 × 10、機具 × 2、材料 × 100
+- 所有依賴關係正確
+- CPM 計算成功
+```
+
+#### 技術細節
+
+**展開運算符的作用：**
+```typescript
+{
+  ...primaryTask,  // 複製所有屬性
+  duration: maxDuration  // 覆蓋特定屬性
+}
+```
+
+這確保了：
+1. 所有原有屬性都被保留
+2. 只有明確指定的屬性被覆蓋
+3. 不會意外丟失任何資料
+
+**自我依賴檢測：**
+```typescript
+dep => dep.taskId !== primaryTask.id
+```
+
+這個簡單的過濾條件可以：
+1. 在 O(1) 時間內檢測
+2. 完全防止自我循環
+3. 不影響其他正常依賴
+
+**清除 CPM 計算結果的必要性：**
+
+合併後任務的依賴關係和工期都已改變，舊的 CPM 計算結果（ES, EF, LS, LF 等）不再有效，必須清除以觸發重新計算。
+
+#### 經驗教訓
+
+**🎓 編程最佳實踐：**
+1. **使用展開運算符保留屬性**：在更新物件時，使用 `{...object, newProp}` 而不是手動列舉屬性
+2. **防禦性編程**：考慮邊界情況（如自我依賴）
+3. **資料一致性**：修改資料後清除相關的計算結果
+4. **單元測試**：這類邏輯錯誤應該在測試中被發現
+
+**🐛 除錯技巧：**
+1. 檢查合併/更新操作是否完整保留資料
+2. 檢查是否可能產生自我引用或循環
+3. 驗證計算結果的有效性（清除舊值）
+4. 使用 console.log 追蹤資料流
+
+**🔍 問題識別：**
+- 「合併後某些資料消失了」→ 檢查物件建立方式
+- 「出現循環依賴錯誤」→ 檢查是否有自我引用
+- 「計算結果不正確」→ 檢查舊資料是否被清除
+
+---
+
+### v1.29 更新內容 (2025-10-28) - 修復手動輸入後置作業 Bug
+
+#### 問題描述
+用戶報告在手動輸入作業時，設定的後置作業（Successors）無法正確顯示，且 CPM 計算結果異常。但是使用 CSV 匯入功能時，相同的資料卻能正常運作。
+
+#### 根本原因
+經過代碼檢查發現，問題出在 `PlanningView.vue` 中所有調用 `buildTaskDependencies()` 函數的地方都**沒有使用其返回值**。
+
+**技術細節：**
+- `buildTaskDependencies()` 函數會返回一個新的任務陣列，並補全雙向依賴關係（predecessors ↔ successors）
+- 但在以下四處調用點都忽略了返回值：
+  1. `handleAddTask()` - 新增任務時
+  2. `handleUpdateTask()` - 更新任務時
+  3. `handleRemoveTask()` - 刪除任務時
+  4. `handleFileImport()` - 匯入 CSV 時
+
+**為什麼 CSV 匯入能正常運作？**
+因為 `parseCSV()` 函數內部已經手動補全了雙向依賴關係（dataIO.ts 第 265-273 行），所以即使忽略 `buildTaskDependencies()` 的返回值也沒有影響。
+
+#### 修復方案
+
+**修改檔案：** `src/views/PlanningView.vue`
+
+**1️⃣ 基本修復：使用 buildTaskDependencies 的返回值**
+
+**修改前：**
+```typescript
+function handleAddTask(task: CPMTask) {
+  tasks.value.push(task)
+  buildTaskDependencies(tasks.value)  // ❌ 忽略返回值
+  showMessage(t.value.messages.taskAdded, 'success')
+}
+```
+
+**修改後：**
+```typescript
+function handleAddTask(task: CPMTask) {
+  tasks.value.push(task)
+  tasks.value = buildTaskDependencies(tasks.value)  // ✅ 使用返回值
+  showMessage(t.value.messages.taskAdded, 'success')
+}
+```
+
+**2️⃣ 進階修復：避免合併時重複重建依賴**
+
+在測試過程中發現，合併重複作業時會出現問題，因為 `mergeDuplicateTasks` 會多次調用 `emit('updateTask')` 和 `emit('removeTask')`，導致依賴關係被多次重建而混亂。
+
+**解決方案：**
+- 在 `handleUpdateTask()` 和 `handleRemoveTask()` 中檢查 `isMerging` 標記
+- 如果正在合併中，跳過 `buildTaskDependencies()`
+- 在 `handleMergeTasks()` 中，所有更新和刪除完成後統一執行一次 `buildTaskDependencies()`
+
+**修改後的完整代碼：**
+
+```typescript
+// 🔧 更新任務（支援合併模式）
+function handleUpdateTask(updatedTask: CPMTask) {
+  const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+  if (index !== -1) {
+    tasks.value[index] = updatedTask
+    // 🔄 只在非合併模式下重建依賴關係（合併時會統一處理）
+    if (!isMerging) {
+      tasks.value = buildTaskDependencies(tasks.value)
+      showMessage(t.value.messages.taskUpdated, 'success')
+    }
+  }
+}
+
+// 🔧 刪除任務（支援合併模式）
+function handleRemoveTask(taskId: string) {
+  tasks.value = tasks.value.filter(t => t.id !== taskId)
+  // 🔄 只在非合併模式下重建依賴關係（合併時會統一處理）
+  if (!isMerging) {
+    tasks.value = buildTaskDependencies(tasks.value)
+    showMessage(t.value.messages.taskDeleted, 'success')
+  }
+}
+
+// 🔧 合併任務完成處理
+function handleMergeTasks() {
+  isMerging = true
+  // 延遲重建依賴關係和顯示訊息，確保所有更新和刪除都完成
+  setTimeout(() => {
+    tasks.value = buildTaskDependencies(tasks.value)  // ✅ 統一重建依賴
+    showMessage(t.value.messages.tasksMerged, 'success')
+    isMerging = false
+  }, 100)
+}
+```
+
+**修復應用於：**
+- ✅ `handleAddTask()` - 第 175 行（總是重建依賴）
+- ✅ `handleUpdateTask()` - 第 185 行（合併時跳過）
+- ✅ `handleRemoveTask()` - 第 195 行（合併時跳過）
+- ✅ `handleMergeTasks()` - 第 204 行（統一重建）
+- ✅ `handleFileImport()` - 第 283 行（總是重建依賴）
+
+#### 修復效果
+
+**修復前：**
+- ❌ 手動新增作業並設定後置作業時，後置作業不會顯示在表格中
+- ❌ CPM 計算時依賴關係不完整，導致結果錯誤
+- ❌ 前置作業和後置作業的雙向關係無法建立
+- ❌ 合併重複作業時會出現依賴關係混亂
+
+**修復後：**
+- ✅ 手動輸入後置作業可以正確顯示
+- ✅ CPM 計算結果正確
+- ✅ 前置作業和後置作業自動建立雙向關聯
+- ✅ 行為與 CSV 匯入一致
+- ✅ 合併重複作業功能正常運作
+- ✅ 依賴關係在合併後正確更新
+
+#### 測試驗證
+
+**測試場景 1：新增作業並設定後置作業**
+```
+步驟：
+1. 新增作業 A（工期 5 天）
+2. 新增作業 B（工期 3 天，後置作業設為 A）
+3. 檢查作業列表
+
+預期結果：
+- 作業 B 的後置作業欄位應顯示「A (FS Lag 0)」
+- 作業 A 的前置作業欄位應顯示「B (FS Lag 0)」
+- CPM 計算應正確反映依賴關係
+```
+
+**測試場景 2：編輯作業並修改後置作業**
+```
+步驟：
+1. 編輯作業 B，將後置作業改為 FS 類型，Lag +2
+2. 儲存修改
+3. 檢查作業列表和 CPM 結果
+
+預期結果：
+- 後置作業關係正確更新
+- CPM 計算考慮 Lag 值
+- 所有時間計算正確
+```
+
+**測試場景 3：合併重複作業**
+```
+步驟：
+1. 新增作業 A（工期 5 天）
+2. 新增作業 B（工期 3 天，前置作業 A）
+3. 新增作業 C（工期 4 天，後置作業 B）
+4. 再次新增作業 B（工期 6 天，不同依賴）
+5. 點擊「合併重複」按鈕
+6. 確認合併
+
+預期結果：
+- 重複的作業 B 被合併為一個
+- 所有依賴關係正確整合
+- 作業 A 的後續作業指向合併後的 B
+- 作業 C 的前置作業指向合併後的 B
+- CPM 計算結果正確
+- 不會出現依賴關係混亂或錯誤
+```
+
+#### 相關技術說明
+
+**buildTaskDependencies() 函數作用：**
+1. 深拷貝所有任務（避免修改原始資料）
+2. 遍歷每個任務的前置作業，確保前置任務的後續列表包含當前任務
+3. 遍歷每個任務的後續作業，確保後續任務的前置列表包含當前任務
+4. 返回處理後的新任務陣列
+
+**為什麼需要雙向依賴？**
+- CPM 演算法需要完整的依賴圖
+- Forward Pass 需要知道每個任務的前置任務
+- Backward Pass 需要知道每個任務的後續任務
+- 缺少任何一方都會導致計算錯誤
+
+**isMerging 標記的作用：**
+- 在合併重複作業過程中，會多次調用 `updateTask` 和 `removeTask`
+- 如果每次都重建依賴關係，會造成：
+  - 性能問題（不必要的重複計算）
+  - 邏輯錯誤（部分任務已更新但其他任務尚未更新，依賴關係不一致）
+- 使用 `isMerging` 標記：
+  - 合併過程中跳過依賴重建
+  - 所有更新完成後統一重建一次
+  - 確保依賴關係的一致性和正確性
+
+#### 經驗教訓
+
+**🎓 編程最佳實踐：**
+1. **重視函數返回值**：如果函數有返回值，通常表示應該使用它
+2. **保持資料不可變性**：`buildTaskDependencies` 返回新陣列而不是修改原陣列，這是函數式編程的良好實踐
+3. **一致性處理**：手動輸入和 CSV 匯入應該使用相同的依賴關係處理邏輯
+4. **批次操作優化**：當需要執行多個相關操作時（如合併），應該：
+   - 使用標記（flag）來控制流程
+   - 避免在過程中執行昂貴的操作
+   - 在所有操作完成後統一處理
+5. **單元測試重要性**：這類錯誤應該在單元測試中被發現
+
+**🐛 除錯經驗：**
+1. 當「某個功能可以運作但另一個不行」時，對比兩個流程的差異
+2. 檢查返回值是否被正確使用
+3. 驗證資料流是否完整
+4. 注意批次操作中的順序和時機問題
+5. 使用標記或狀態來控制複雜的操作流程
+
+---
+
+### v1.28 更新內容 (2025-10-28) - PDF 報表匯出功能
+
+#### 設計理念
+為進度規劃工具添加完整的 PDF 報表匯出功能，讓用戶可以將 CPM 計算結果、甘特圖和專案摘要導出為專業的 PDF 文件，方便分享和存檔。
+
+#### 核心功能
+
+**1. 📄 PDF 報表生成**
+- ✨ **完整報表內容**
+  - 專案摘要（總工期、作業數量、要徑數量等）
+  - 要徑作業列表
+  - CPM 計算結果表格（完整數據）
+  - 甘特圖（Bar Chart）視覺化
+  - 專業的 A4 格式排版
+
+- 📊 **專案摘要資訊**
+  - Total Duration（專案總工期）
+  - Total Tasks（總作業數）
+  - Critical Path Tasks（要徑作業數）
+  - Start Tasks（起始作業數）
+  - End Tasks（結束作業數）
+
+**2. 🖼️ 圖表截圖技術**
+- ✨ **html2canvas 整合**
+  - 高品質圖表截圖（scale: 2.0 for table, 1.5 for charts）
+  - 支援中文字體顯示
+  - 自動處理跨域圖片
+  - 白色背景確保列印品質
+
+- 📐 **智能分頁**
+  - 自動檢測內容高度
+  - 超出頁面範圍時自動分頁
+  - 圖表過高時自動縮小以適應頁面
+  - 保持內容完整性
+
+**3. 📝 文字表格備援**
+- ✨ **降級處理機制**
+  - 當圖表截圖失敗時，自動使用文字表格
+  - 包含所有 CPM 計算結果（Task, Duration, ES, EF, LS, LF, TF, FF, Critical）
+  - 自動分頁處理
+  - 確保報表總是可以生成
+
+**4. 🎨 專業排版設計**
+- ✨ **排版規格**
+  - A4 紙張尺寸（210mm × 297mm）
+  - 邊距：15mm
+  - 字體：Helvetica（支援英文與數字）
+  - 標題階層：20px（主標題）、14px（次標題）、10px（內容）
+
+- 📏 **視覺層次**
+  - 粗體標題清晰分段
+  - 適當的行距與間距
+  - 專業的表格對齊
+  - 統一的視覺風格
+
+#### 技術實現
+
+**依賴套件：**
+```json
+{
+  "jspdf": "^2.x.x",
+  "html2canvas": "^1.x.x",
+  "@types/html2canvas": "^1.x.x"
+}
+```
+
+**核心函數：**
+```typescript
+/**
+ * 📄 匯出 CPM 報表為 PDF
+ * @param cpmResult - CPM 計算結果
+ * @returns Promise<void>
+ */
+export async function exportReportToPDF(cpmResult: CPMResult): Promise<void>
+```
+
+**主要特點：**
+1. **動態導入**：使用 dynamic import 減少初始加載時間
+2. **異步處理**：完整的 async/await 錯誤處理
+3. **進度提示**：生成過程中顯示提示訊息
+4. **容錯機制**：截圖失敗時使用文字表格備援
+
+#### 使用者流程
+
+```
+1. 用戶輸入作業資料並執行 CPM 計算
+   ↓
+2. 點擊「匯出報表」按鈕
+   ↓
+3. 系統顯示「正在生成 PDF 報表...」
+   ↓
+4. 系統截取表格和圖表
+   ↓
+5. 生成 PDF 文件
+   ↓
+6. 自動下載 PDF（檔名：CPM_Report_[timestamp].pdf）
+   ↓
+7. 顯示「PDF 報表已成功下載！」
+```
+
+#### PDF 報表結構
+
+```
+第 1 頁：
+┌────────────────────────────┐
+│        CPM Report          │ ← 主標題
+│     Date: 2025/10/28       │ ← 日期
+├────────────────────────────┤
+│   Project Summary          │ ← 專案摘要
+│   - Total Duration: 41 days│
+│   - Total Tasks: 9         │
+│   - Critical Path Tasks: 5 │
+│   - Start Tasks: 1         │
+│   - End Tasks: 1           │
+├────────────────────────────┤
+│   Critical Path            │ ← 要徑
+│   A → B → C → D → E        │
+├────────────────────────────┤
+│   CPM Calculation Results  │ ← CPM 結果表格
+│   [表格截圖或文字表格]     │
+└────────────────────────────┘
+
+第 2 頁：
+┌────────────────────────────┐
+│   Gantt Chart (Bar Chart)  │ ← 甘特圖
+│   [甘特圖截圖]             │
+│                            │
+│                            │
+│                            │
+└────────────────────────────┘
+```
+
+#### 視覺對比
+
+**改進前：**
+- ❌ 只能匯出 CSV 文字檔案
+- ❌ 沒有視覺化圖表
+- ❌ 資料分散在多個檔案
+- ❌ 不便於分享和展示
+
+**改進後：**
+- ✅ 完整的 PDF 報表
+- ✅ 包含圖表截圖
+- ✅ 所有資料集中在一個文件
+- ✅ 專業的排版，適合分享
+
+#### 技術優化
+
+**1. 🎯 CSS 類名標記**
+- CPMResultTable.vue：添加 `result-table` 類名
+- GanttChart.vue：使用 `gantt-chart` 類名
+- 方便 DOM 查詢和截圖
+
+**2. ⚡ 性能優化**
+- 動態導入：僅在需要時加載 PDF 生成庫
+- 異步處理：不阻塞 UI 操作
+- 圖片壓縮：適當的 scale 參數平衡品質與檔案大小
+
+**3. 🛡️ 錯誤處理**
+- Try-catch 包裹所有操作
+- 截圖失敗時使用文字表格
+- 友善的錯誤提示訊息
+
+#### 使用者價值
+
+- 📊 **專業報表**：產出專業的 PDF 文件，適合提交或分享
+- 🖼️ **視覺呈現**：包含圖表，比純文字更直觀
+- 💾 **便於存檔**：單一 PDF 檔案包含所有資訊
+- 📧 **易於分享**：PDF 格式通用，任何裝置都能開啟
+- 🎓 **教學友好**：學生可以將作業結果輸出為報表提交
+- 💼 **專業形象**：規範的排版提升專業度
+
+#### 使用場景
+
+**1. 學生作業提交**
+- 完成 CPM 計算後匯出 PDF
+- 直接提交給老師
+
+**2. 專案報告**
+- 產出專業的進度規劃報告
+- 向業主或團隊成員展示
+
+**3. 存檔記錄**
+- 保存專案規劃的完整記錄
+- 方便日後查閱
+
+**4. 比較分析**
+- 匯出多個版本的規劃報表
+- 進行方案比較
+
+#### 未來擴展
+
+**可能的增強功能：**
+- 📝 添加自訂報表標題和註解
+- 🎨 支援多種主題和配色
+- 📊 包含 PDM 網圖和資源直方圖
+- 🌐 多語言報表（繁中/英文）
+- 💼 公司 Logo 和浮水印
+- 📈 統計圖表（餅圖、長條圖等）
+
+---
+
+### v1.27 更新內容 (2025-10-28) - PDM 九宮格增加 FF 自由浮時顯示
+
+#### 設計理念
+根據用戶反饋，在 PDM（Precedence Diagramming Method）網圖的九宮格中增加 FF（Free Float，自由浮時）的顯示，提供更完整的作業時間資訊。
+
+#### 核心改進項目
+
+**1. 📊 九宮格佈局更新**
+- ✨ **第二行佈局改變**
+  - 改造前：空 | 工期 | 空
+  - 改造後：FF | 工期 | 空
+  - 左側格子顯示自由浮時（FF）
+  - 中間格子顯示工期（保持不變）
+  - 右側格子保持空白
+
+- 📐 **九宮格完整佈局**
+  ```
+  ┌─────────┬─────────┬─────────┐
+  │   ES    │   名稱   │   EF    │
+  ├─────────┼─────────┼─────────┤
+  │   FF    │   工期   │         │
+  ├─────────┼─────────┼─────────┤
+  │   LS    │   TF    │   LF    │
+  └─────────┴─────────┴─────────┘
+  ```
+
+**2. 🏷️ 標籤說明優化**
+- ✨ **新增 FF 標籤**
+  - 位置：第二行左側格子下方
+  - 字體大小：8px
+  - 顏色：#999（淺灰）
+  - 與其他標籤（ES、EF、LS、LF、TF）統一風格
+
+- 📝 **標籤佈局**
+  - 第一行標籤：ES（左）、EF（右）
+  - 第二行標籤：FF（左）
+  - 第三行標籤：LS（左）、TF（中）、LF（右）
+
+**3. 🔢 FF 數值顯示**
+- ✨ **顯示規格**
+  - 字體大小：11px
+  - 字體權重：600（Semi-bold）
+  - 顏色：#333（深灰）
+  - 水平與垂直置中對齊
+  - 顯示格式：`${task.ff || 0}`
+
+**4. 📊 完整時間資訊**
+- ✨ **九宮格提供的資訊**
+  - ES (Earliest Start)：最早開始時間
+  - EF (Earliest Finish)：最早完成時間
+  - LS (Latest Start)：最晚開始時間
+  - LF (Latest Finish)：最晚完成時間
+  - TF (Total Float)：總浮時
+  - FF (Free Float)：自由浮時 **[NEW]**
+  - Duration：工期
+
+#### 視覺對比
+
+```
+改造前（缺少 FF）：
+┌─────────┬─────────┬─────────┐
+│   10    │    F    │   19    │
+│   ES    │         │   EF    │
+├─────────┼─────────┼─────────┤
+│         │    9    │         │
+│         │         │         │
+├─────────┼─────────┼─────────┤
+│   10    │    0    │   19    │
+│   LS    │   TF    │   LF    │
+└─────────┴─────────┴─────────┘
+
+改造後（包含 FF）：
+┌─────────┬─────────┬─────────┐
+│   10    │    F    │   19    │
+│   ES    │         │   EF    │
+├─────────┼─────────┼─────────┤
+│    0    │    9    │         │
+│   FF    │         │         │
+├─────────┼─────────┼─────────┤
+│   10    │    0    │   19    │
+│   LS    │   TF    │   LF    │
+└─────────┴─────────┴─────────┘
+  ↑ 新增 FF 顯示
+```
+
+#### 技術實現
+
+**Vue 組件更新（PDMDiagram.vue）：**
+```typescript
+// 第二行：FF | 工期 | 空
+// 左側顯示自由浮時 (FF)
+nodeGroup.append('text')
+  .attr('x', CELL_WIDTH / 2)
+  .attr('y', CELL_HEIGHT * 1.5 + 5)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '11px')
+  .style('font-weight', '600')
+  .style('fill', '#333')
+  .text(`${task.ff || 0}`)
+
+// 第二行標籤
+nodeGroup.append('text')
+  .attr('x', CELL_WIDTH / 2)
+  .attr('y', CELL_HEIGHT * 2 - 2)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '8px')
+  .style('fill', '#999')
+  .text('FF')
+```
+
+#### 資料來源
+
+FF（自由浮時）的計算已在 `cpmEngine.ts` 的 `calculateFloatAndCriticalPath()` 函數中完成：
+
+```typescript
+// 計算自由浮時 (Free Float)
+// FF 是在不延遲任何後續任務的前提下，任務可以延遲的最大時間
+if (task.successors.length === 0) {
+  // 結束任務的 FF = TF
+  task.ff = task.tf || 0
+} else {
+  let minFloat = Infinity
+  
+  // 對每個後續任務，根據依賴類型計算約束
+  for (const succDep of task.successors) {
+    const succ = taskMap.get(succDep.taskId)
+    if (succ && succ.es !== undefined && succ.ef !== undefined) {
+      const lag = succDep.lag || 0
+      let allowedFloat = 0
+      
+      switch (succDep.type) {
+        case 'FS': allowedFloat = succ.es - lag - task.ef; break
+        case 'SS': allowedFloat = succ.es - lag - task.es; break
+        case 'FF': allowedFloat = succ.ef - lag - task.ef; break
+        case 'SF': allowedFloat = succ.ef - lag - task.es; break
+      }
+      
+      minFloat = Math.min(minFloat, allowedFloat)
+    }
+  }
+  
+  task.ff = minFloat === Infinity ? 0 : Math.max(0, minFloat)
+}
+```
+
+#### 使用者價值
+
+- 📊 **資訊完整性**：九宮格現在包含所有關鍵的時間參數
+- 🎓 **教學價值**：學生可以直接從圖上看到 FF 值，理解自由浮時概念
+- 🔍 **決策支援**：FF 值幫助專案經理識別可以獨立延遲的作業
+- 📐 **專業性**：符合專業工程管理軟體的標準顯示格式
+- 💡 **便利性**：無需查看詳細表格，直接從網圖獲取完整資訊
+
+#### 設計一致性
+
+- ✅ 與現有九宮格風格完全一致
+- ✅ 字體大小、權重、顏色統一
+- ✅ 標籤位置和樣式統一
+- ✅ 數值格式統一
+- ✅ 保持極簡專業的視覺風格
+
+#### 教學意義
+
+**FF（自由浮時）的重要性：**
+1. **定義**：在不影響任何後續作業最早開始時間的前提下，作業可延遲的最大時間
+2. **與 TF 的關係**：FF ≤ TF（自由浮時永遠不會超過總浮時）
+3. **實務應用**：
+   - FF = 0：延遲會立即影響後續作業
+   - FF > 0：有獨立調整空間，可用於資源調配
+   - 要徑作業：FF = TF = 0
+
+---
 
 ### v1.25 更新內容 (2025-10-27) - 首頁極簡重新設計
 

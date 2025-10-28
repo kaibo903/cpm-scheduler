@@ -150,6 +150,7 @@ import {
   exportTasksToCSV,
   exportCPMResultToCSV,
   exportCriticalPathReport,
+  exportReportToPDF,
   importTasksFromCSV,
   downloadCSVTemplate
 } from '../utils/dataIO'
@@ -171,7 +172,7 @@ let isMerging = false  // 🔄 合併標記，避免顯示多個通知
 // 🔧 任務管理函式
 function handleAddTask(task: CPMTask) {
   tasks.value.push(task)
-  buildTaskDependencies(tasks.value)
+  tasks.value = buildTaskDependencies(tasks.value)
   showMessage(t.value.messages.taskAdded, 'success')
 }
 
@@ -179,9 +180,9 @@ function handleUpdateTask(updatedTask: CPMTask) {
   const index = tasks.value.findIndex(t => t.id === updatedTask.id)
   if (index !== -1) {
     tasks.value[index] = updatedTask
-    buildTaskDependencies(tasks.value)
-    // 只在非合併模式下顯示訊息
+    // 🔄 只在非合併模式下重建依賴關係（合併時會統一處理）
     if (!isMerging) {
+      tasks.value = buildTaskDependencies(tasks.value)
       showMessage(t.value.messages.taskUpdated, 'success')
     }
   }
@@ -189,17 +190,18 @@ function handleUpdateTask(updatedTask: CPMTask) {
 
 function handleRemoveTask(taskId: string) {
   tasks.value = tasks.value.filter(t => t.id !== taskId)
-  buildTaskDependencies(tasks.value)
-  // 只在非合併模式下顯示訊息
+  // 🔄 只在非合併模式下重建依賴關係（合併時會統一處理）
   if (!isMerging) {
+    tasks.value = buildTaskDependencies(tasks.value)
     showMessage(t.value.messages.taskDeleted, 'success')
   }
 }
 
 function handleMergeTasks() {
   isMerging = true
-  // 延遲顯示訊息，確保所有更新和刪除都完成
+  // 延遲重建依賴關係和顯示訊息，確保所有更新和刪除都完成
   setTimeout(() => {
+    tasks.value = buildTaskDependencies(tasks.value)
     showMessage(t.value.messages.tasksMerged, 'success')
     isMerging = false
   }, 100)
@@ -247,12 +249,14 @@ function exportResults() {
   }
 }
 
-function exportReport() {
+async function exportReport() {
   if (!cpmResult.value) return
   
   try {
-    exportCriticalPathReport(cpmResult.value)
-    showMessage(t.value.messages.exportSuccess, 'success')
+    // 💾 匯出 PDF 報表
+    showMessage('正在生成 PDF 報表...', 'info')
+    await exportReportToPDF(cpmResult.value)
+    showMessage('PDF 報表已成功下載！', 'success')
   } catch (error) {
     showMessage(t.value.messages.error + ': ' + (error as Error).message, 'error')
   }
@@ -277,7 +281,7 @@ async function handleFileImport(event: Event) {
   try {
     const importedTasks = await importTasksFromCSV(file)
     tasks.value = importedTasks
-    buildTaskDependencies(tasks.value)
+    tasks.value = buildTaskDependencies(tasks.value)
     showImportDialog.value = false
     showMessage(t.value.messages.importSuccess, 'success')
     

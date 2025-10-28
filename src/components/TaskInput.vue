@@ -907,6 +907,7 @@ function mergeDuplicateTasks() {
     let mergedPredecessors: Dependency[] = []
     let mergedSuccessors: Dependency[] = []
     let maxDuration = 0
+    let mergedResources: any[] = []
     
     // 合併所有重複作業（包括主作業）的依賴關係
     for (const task of duplicateTasks) {
@@ -927,18 +928,44 @@ function mergeDuplicateTasks() {
         return dep
       })
       
-      mergedPredecessors = mergeDependencies(mergedPredecessors, updatedPreds)
-      mergedSuccessors = mergeDependencies(mergedSuccessors, updatedSuccs)
+      // 🔄 過濾掉指向自己的依賴（防止自我循環）
+      const validPreds = updatedPreds.filter(dep => dep.taskId !== primaryTask.id)
+      const validSuccs = updatedSuccs.filter(dep => dep.taskId !== primaryTask.id)
+      
+      mergedPredecessors = mergeDependencies(mergedPredecessors, validPreds)
+      mergedSuccessors = mergeDependencies(mergedSuccessors, validSuccs)
       maxDuration = Math.max(maxDuration, task.duration)
+      
+      // 🔄 合併資源（保留所有資源，避免重複）
+      if (task.resources && task.resources.length > 0) {
+        for (const resource of task.resources) {
+          const exists = mergedResources.some(r => 
+            r.name === resource.name && r.type === resource.type
+          )
+          if (!exists) {
+            mergedResources.push({ ...resource })
+          }
+        }
+      }
     }
     
-    // 更新主任务
+    // 🔧 更新主任務（保留所有原有屬性，只更新需要合併的部分）
     const updatedTask: CPMTask = {
-      id: primaryTask.id,
-      name: primaryTask.name,
+      ...primaryTask,  // 保留原有所有屬性
       duration: maxDuration,
       predecessors: mergedPredecessors,
-      successors: mergedSuccessors
+      successors: mergedSuccessors,
+      resources: mergedResources.length > 0 ? mergedResources : primaryTask.resources,
+      // 🔄 清除 CPM 計算結果，需要重新計算
+      es: undefined,
+      ef: undefined,
+      ls: undefined,
+      lf: undefined,
+      tf: undefined,
+      ff: undefined,
+      isCritical: undefined,
+      isStart: undefined,
+      isEnd: undefined
     }
     
     updatedTasks.push(updatedTask)
@@ -953,10 +980,9 @@ function mergeDuplicateTasks() {
     const alreadyUpdated = updatedTasks.some(t => t.id === task.id)
     if (alreadyUpdated) continue
     
-    let needsUpdate = false
+    // 🔧 更新依賴關係中的 taskId（將被刪除的 ID 映射為保留的 ID）
     const updatedPredecessors = task.predecessors.map(dep => {
       if (idMapping.has(dep.taskId)) {
-        needsUpdate = true
         return { ...dep, taskId: idMapping.get(dep.taskId)! }
       }
       return dep
@@ -964,34 +990,96 @@ function mergeDuplicateTasks() {
     
     const updatedSuccessors = task.successors.map(dep => {
       if (idMapping.has(dep.taskId)) {
-        needsUpdate = true
         return { ...dep, taskId: idMapping.get(dep.taskId)! }
       }
       return dep
     })
     
-    // 如果有依賴關係需要更新
-    if (needsUpdate) {
-      // 去除可能的重複依賴
-      const uniquePredecessors = mergeDependencies([], updatedPredecessors)
-      const uniqueSuccessors = mergeDependencies([], updatedSuccessors)
+    // 🔍 檢查是否有任何依賴被更新（比較前後是否不同）
+    const predsChanged = JSON.stringify(task.predecessors) !== JSON.stringify(updatedPredecessors)
+    const succsChanged = JSON.stringify(task.successors) !== JSON.stringify(updatedSuccessors)
+    
+    // 🎯 如果有依賴關係需要更新，或者依賴指向已被刪除的任務
+    if (predsChanged || succsChanged) {
+      // 🔄 過濾掉自我依賴並去除重複
+      const filteredPreds = updatedPredecessors.filter(dep => dep.taskId !== task.id)
+      const filteredSuccs = updatedSuccessors.filter(dep => dep.taskId !== task.id)
+      
+      const uniquePredecessors = mergeDependencies([], filteredPreds)
+      const uniqueSuccessors = mergeDependencies([], filteredSuccs)
       
       updatedTasks.push({
         ...task,
         predecessors: uniquePredecessors,
-        successors: uniqueSuccessors
+        successors: uniqueSuccessors,
+        // 🔄 清除 CPM 計算結果，需要重新計算
+        es: undefined,
+        ef: undefined,
+        ls: undefined,
+        lf: undefined,
+        tf: undefined,
+        ff: undefined,
+        isCritical: undefined,
+        isStart: undefined,
+        isEnd: undefined
       })
     }
   }
   
-  // 第四階段：執行所有更新（靜默模式，不顯示訊息）
-  for (const task of updatedTasks) {
-    emit('updateTask', task)
+  // 🔍 額外驗證：確保所有剩餘任務的依賴都指向有效的 ID
+  const validTaskIds = new Set<string>()
+  for (const task of props.tasks) {
+    if (!tasksToRemove.includes(task.id)) {
+      validTaskIds.add(task.id)
+    }
+  }
+  // 將主任務 ID 也添加到有效 ID 集合中
+  for (const [_, primaryTask] of primaryTaskMap) {
+    validTaskIds.add(primaryTask.id)
   }
   
-  // 第五階段：刪除重複的任務（靜默模式，不顯示訊息）
+  // 檢查所有未被明確更新的任務，確保它們的依賴都是有效的
+  for (const task of props.tasks) {
+    if (tasksToRemove.includes(task.id)) continue
+    
+    const alreadyUpdated = updatedTasks.some(t => t.id === task.id)
+    if (alreadyUpdated) continue
+    
+    // 檢查是否有無效的依賴
+    const hasInvalidDeps = 
+      task.predecessors.some(dep => !validTaskIds.has(dep.taskId)) ||
+      task.successors.some(dep => !validTaskIds.has(dep.taskId))
+    
+    if (hasInvalidDeps) {
+      // 過濾掉無效的依賴
+      const validPreds = task.predecessors.filter(dep => validTaskIds.has(dep.taskId))
+      const validSuccs = task.successors.filter(dep => validTaskIds.has(dep.taskId))
+      
+      updatedTasks.push({
+        ...task,
+        predecessors: validPreds,
+        successors: validSuccs,
+        es: undefined,
+        ef: undefined,
+        ls: undefined,
+        lf: undefined,
+        tf: undefined,
+        ff: undefined,
+        isCritical: undefined,
+        isStart: undefined,
+        isEnd: undefined
+      })
+    }
+  }
+  
+  // 第四階段：先刪除重複的任務（必須先刪除，避免 ID 衝突）
   for (const taskId of tasksToRemove) {
     emit('removeTask', taskId)
+  }
+  
+  // 第五階段：然後執行所有更新（靜默模式，不顯示訊息）
+  for (const task of updatedTasks) {
+    emit('updateTask', task)
   }
   
   // 第六階段：發送合併完成事件

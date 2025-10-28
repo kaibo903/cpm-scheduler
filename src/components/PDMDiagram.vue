@@ -392,7 +392,18 @@ function renderDiagram() {
         .style('fill', '#333')
         .text(`${task.ef || 0}`)
       
-      // 第二行：空 | 工期 | 空
+      // 第二行：FF | 工期 | 空
+      // 左側顯示自由浮時 (FF)
+      nodeGroup.append('text')
+        .attr('x', CELL_WIDTH / 2)
+        .attr('y', CELL_HEIGHT * 1.5 + 5)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '11px')
+        .style('font-weight', '600')
+        .style('fill', '#333')
+        .text(`${task.ff || 0}`)
+      
+      // 中間顯示工期
       nodeGroup.append('text')
         .attr('x', CELL_WIDTH * 1.5)
         .attr('y', CELL_HEIGHT * 1.5 + 5)
@@ -431,6 +442,7 @@ function renderDiagram() {
         .text(`${task.lf || 0}`)
       
       // 添加小標籤說明
+      // 第一行標籤
       nodeGroup.append('text')
         .attr('x', CELL_WIDTH / 2)
         .attr('y', CELL_HEIGHT - 2)
@@ -447,6 +459,16 @@ function renderDiagram() {
         .style('fill', '#999')
         .text('EF')
       
+      // 第二行標籤
+      nodeGroup.append('text')
+        .attr('x', CELL_WIDTH / 2)
+        .attr('y', CELL_HEIGHT * 2 - 2)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '8px')
+        .style('fill', '#999')
+        .text('FF')
+      
+      // 第三行標籤
       nodeGroup.append('text')
         .attr('x', CELL_WIDTH / 2)
         .attr('y', NODE_HEIGHT - 2)

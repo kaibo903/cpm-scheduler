@@ -633,3 +633,254 @@ export function downloadTCTCSVTemplate(): void {
   const BOM = '\uFEFF'
   downloadFile(BOM + csvContent, 'tct_template.csv', 'text/csv;charset=utf-8;')
 }
+
+/**
+ * 📄 匯出 CPM 報表為 PDF
+ * 
+ * 功能說明：產生完整的進度規劃 PDF 報表
+ * 
+ * 報表內容包含：
+ * 1. 專案摘要（總工期、要徑數量等）
+ * 2. CPM 計算結果表格
+ * 3. 甘特圖（Bar Chart）
+ * 4. PDM 網圖（可選）
+ * 5. 要徑資訊
+ * 
+ * @param cpmResult - CPM 計算結果
+ * @returns Promise<void>
+ */
+export async function exportReportToPDF(cpmResult: CPMResult): Promise<void> {
+  // 動態導入 jsPDF 和 html2canvas
+  const { default: jsPDF } = await import('jspdf')
+  const html2canvas = (await import('html2canvas')).default
+  
+  try {
+    // 📊 建立 PDF 文件（A4 尺寸）
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const margin = 15
+    const contentWidth = pageWidth - 2 * margin
+    let yPos = margin
+    
+    // 🎨 設定字體與樣式（使用支援中文的字體）
+    pdf.setFont('helvetica')
+    
+    // 📋 標題
+    pdf.setFontSize(20)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('CPM', pageWidth / 2, yPos, { align: 'center' })
+    yPos += 12
+    
+    // 📝 日期
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    const currentDate = new Date().toLocaleDateString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    pdf.text(`Date: ${currentDate}`, pageWidth / 2, yPos, { align: 'center' })
+    yPos += 15
+    
+    // 📊 專案摘要
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Project Summary', margin, yPos)
+    yPos += 8
+    
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    const criticalTasks = cpmResult.tasks.filter(t => t.isCritical)
+    
+    const summaryData = [
+      `Total Duration: ${cpmResult.totalDuration} days`,
+      `Total Tasks: ${cpmResult.tasks.length}`,
+      `Critical Path Tasks: ${criticalTasks.length}`,
+      `Start Tasks: ${cpmResult.startTasks.length}`,
+      `End Tasks: ${cpmResult.endTasks.length}`
+    ]
+    
+    summaryData.forEach(line => {
+      pdf.text(line, margin + 5, yPos)
+      yPos += 6
+    })
+    yPos += 5
+    
+    // 🎯 要徑作業列表
+    pdf.setFontSize(12)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Critical Path', margin, yPos)
+    yPos += 7
+    
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    const criticalPathNames = criticalTasks.map(t => t.name).join(' -> ')
+    const criticalPathLines = pdf.splitTextToSize(criticalPathNames, contentWidth - 10)
+    
+    criticalPathLines.forEach((line: string) => {
+      if (yPos > pageHeight - 30) {
+        pdf.addPage()
+        yPos = margin
+      }
+      pdf.text(line, margin + 5, yPos)
+      yPos += 6
+    })
+    yPos += 10
+    
+    // 📊 CPM 結果表格
+    if (yPos > pageHeight - 50) {
+      pdf.addPage()
+      yPos = margin
+    }
+    
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('CPM Calculation Results', margin, yPos)
+    yPos += 10
+    
+    // 📸 截取CPM結果表格
+    const resultTable = document.querySelector('.result-table') as HTMLElement
+    if (resultTable) {
+      try {
+        const canvas = await html2canvas(resultTable, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        })
+        
+        const imgData = canvas.toDataURL('image/png')
+        const imgWidth = contentWidth
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+        
+        // 檢查是否需要分頁
+        if (yPos + imgHeight > pageHeight - margin) {
+          pdf.addPage()
+          yPos = margin
+        }
+        
+        pdf.addImage(imgData, 'PNG', margin, yPos, imgWidth, imgHeight)
+        yPos += imgHeight + 10
+      } catch (error) {
+        console.warn('無法截取 CPM 結果表格:', error)
+        // 如果截圖失敗，使用文字表格替代
+        yPos = addTextTable(pdf, cpmResult, margin, yPos, contentWidth, pageHeight)
+      }
+    } else {
+      // 使用文字表格
+      yPos = addTextTable(pdf, cpmResult, margin, yPos, contentWidth, pageHeight)
+    }
+    
+    // 📈 甘特圖
+    pdf.addPage()
+    yPos = margin
+    
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Gantt Chart (Bar Chart)', margin, yPos)
+    yPos += 10
+    
+    const ganttChart = document.querySelector('.gantt-chart') as HTMLElement
+    if (ganttChart) {
+      try {
+        const canvas = await html2canvas(ganttChart, {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        })
+        
+        const imgData = canvas.toDataURL('image/png')
+        const imgWidth = contentWidth
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+        
+        if (imgHeight > pageHeight - yPos - margin) {
+          // 圖表太高，縮小尺寸
+          const maxHeight = pageHeight - yPos - margin - 10
+          const scaledWidth = (canvas.width * maxHeight) / canvas.height
+          pdf.addImage(imgData, 'PNG', margin, yPos, scaledWidth, maxHeight)
+        } else {
+          pdf.addImage(imgData, 'PNG', margin, yPos, imgWidth, imgHeight)
+        }
+      } catch (error) {
+        console.warn('無法截取甘特圖:', error)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'italic')
+        pdf.text('Gantt chart capture failed', margin, yPos)
+      }
+    }
+    
+    // 💾 儲存 PDF
+    const filename = `CPM_Report_${new Date().getTime()}.pdf`
+    pdf.save(filename)
+    
+  } catch (error) {
+    console.error('PDF 生成失敗:', error)
+    throw new Error('PDF 報表生成失敗')
+  }
+}
+
+/**
+ * 🔧 輔助函數：在 PDF 中添加文字表格
+ */
+function addTextTable(
+  pdf: any, 
+  cpmResult: CPMResult, 
+  margin: number, 
+  startY: number, 
+  contentWidth: number,
+  pageHeight: number
+): number {
+  let yPos = startY
+  const lineHeight = 6
+  const colWidths = [40, 15, 15, 15, 15, 15, 15, 15, 20]
+  
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'bold')
+  
+  // 表格標題
+  const headers = ['Task', 'Dur', 'ES', 'EF', 'LS', 'LF', 'TF', 'FF', 'Critical']
+  let xPos = margin
+  headers.forEach((header, i) => {
+    pdf.text(header, xPos, yPos)
+    xPos += colWidths[i] || 15
+  })
+  yPos += lineHeight
+  
+  // 分隔線
+  pdf.setDrawColor(0)
+  pdf.line(margin, yPos, margin + contentWidth, yPos)
+  yPos += 2
+  
+  // 表格內容
+  pdf.setFont('helvetica', 'normal')
+  cpmResult.tasks.forEach(task => {
+    if (yPos > pageHeight - 20) {
+      pdf.addPage()
+      yPos = margin
+    }
+    
+    xPos = margin
+    const row = [
+      task.name.substring(0, 20),
+      task.duration.toString(),
+      (task.es || 0).toString(),
+      (task.ef || 0).toString(),
+      (task.ls || 0).toString(),
+      (task.lf || 0).toString(),
+      (task.tf || 0).toString(),
+      (task.ff || 0).toString(),
+      task.isCritical ? 'Yes' : 'No'
+    ]
+    
+    row.forEach((cell, i) => {
+      pdf.text(cell, xPos, yPos)
+      xPos += colWidths[i] || 15
+    })
+    
+    yPos += lineHeight
+  })
+  
+  return yPos + 10
+}
